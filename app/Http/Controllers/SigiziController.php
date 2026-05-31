@@ -70,7 +70,7 @@ class SigiziController extends Controller {
 
             if (isset($data['tglLahir']))     { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
             if (isset($data['jenisKelamin'])) { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
-            if (isset($data['namaIbu']))      { $data['nama_ibu']       = $data['namaIbu'];       unset($data['namaIbu']); }
+            if (isset($data['nama_ibu']))      { $data['nama_ibu']       = $data['nama_ibu'];       unset($data['nama_ibu']); }
             if (isset($data['nikIbu']))       { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
             if (isset($data['noHP']))         { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
             if (isset($data['namaAyah']))     { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
@@ -204,7 +204,7 @@ class SigiziController extends Controller {
             // Konversi camelCase dari frontend ke snake_case database
             if (isset($data['tglLahir']))      { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
             if (isset($data['jenisKelamin']))  { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
-            if (isset($data['namaIbu']))       { $data['nama_ibu']       = $data['namaIbu'];       unset($data['namaIbu']); }
+            if (isset($data['nama_ibu']))       { $data['nama_ibu']       = $data['nama_ibu'];       unset($data['nama_ibu']); }
             if (isset($data['nikIbu']))        { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
             if (isset($data['noHP']))          { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
             if (isset($data['namaAyah']))      { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }

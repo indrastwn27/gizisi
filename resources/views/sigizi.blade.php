@@ -96,12 +96,12 @@ tr:hover td{background:#f9fdfb}
 }
 .login-left-bg{
   position:absolute;inset:0;
-  background:url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=80') center/cover no-repeat;
+  background:url('https://lh3.googleusercontent.com/gps-cs-s/APNQkAHKqekna7fs7Uv0exOo2Pfs7Db33qf0_fHsDAproOfsugKX9NQJ2nq51JpCWMHzxow9DcDO2_iBSsF1dI1ErknxVr-IzAmuYXoAR47rYRPMp91MDc16aBER6gxo8fg04I8MJyfE=s1360-w1360-h1020-rw') center/cover no-repeat;
   opacity:.35;
 }
 .login-left-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(160deg,rgba(14,122,96,.85) 0%,rgba(22,163,127,.6) 100%);
+  background:linear-gradient(160deg,rgba(20, 120, 51, 0.85) 0%,rgba(24, 131, 69, 0.6) 50%);
 }
 .login-left-content{
   position:relative;z-index:2;
@@ -348,6 +348,112 @@ tr:hover td{background:#f9fdfb}
 .ortu-status{display:inline-block;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;margin-top:10px}
 .mt-4{margin-top:4px}
 .mb-12{margin-bottom:12px}
+
+
+/* ══════════════════════════════════════
+   RESPONSIVE — MOBILE (max 768px)
+   ══════════════════════════════════════ */
+
+/* Tombol hamburger menu */
+.menu-toggle {
+  display: none;
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  align-items: center; justify-content: center;
+  cursor: pointer; font-size: 20px; color: var(--text2);
+  flex-shrink: 0;
+}
+
+/* Overlay gelap saat sidebar terbuka di HP */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 99;
+}
+.sidebar-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+
+  /* ── LOGIN ── */
+  #loginPage { flex-direction: column; }
+  .login-left { display: none; } /* sembunyikan hero di HP */
+  .login-right {
+    width: 100%; min-width: unset;
+    padding: 32px 24px;
+    min-height: 100vh;
+    align-items: flex-start;
+    padding-top: 48px;
+  }
+  .login-form-wrap { max-width: 100%; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0;
+    height: 100vh; z-index: 100;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    width: 260px !important; min-width: 260px !important;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* ── APP SHELL ── */
+  #app { flex-direction: column; }
+  .main-area { width: 100%; }
+
+  /* ── TOPBAR ── */
+  .topbar { padding: 12px 16px; gap: 10px; }
+  .topbar-title { font-size: 15px; }
+  .menu-toggle { display: flex; }
+  .user-name { display: none; } /* sembunyikan nama user, hemat tempat */
+
+  /* ── MAIN CONTENT ── */
+  .main-content { padding: 16px; }
+
+  /* ── GRID ── */
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+  .col-span-2 { grid-column: span 1; }
+
+  /* ── ARTIKEL ── */
+  .artikel-grid { grid-template-columns: 1fr; }
+
+  /* ── TABEL ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── SEARCH ROW ── */
+  .search-row { flex-wrap: wrap; }
+  .search-row .btn { font-size: 12px; padding: 7px 12px; }
+
+  /* ── CARD ── */
+  .card { padding: 14px; }
+
+  /* ── METRIC ── */
+  .metric-val { font-size: 22px; }
+
+  /* ── MODAL ── */
+  .modal-bg { padding: 0; align-items: flex-end; }
+  .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 92vh;
+    max-width: 100%;
+    padding: 20px 18px;
+  }
+
+  /* ── TOAST ── */
+  #toast { bottom: 16px; right: 12px; left: 12px; }
+  .toast-item { font-size: 12px; }
+
+  /* ── JADWAL ── */
+  .jadwal-item { flex-wrap: wrap; gap: 10px; }
+
+  /* ── INFO ROW ── */
+  .info-label { width: 110px; font-size: 12px; }
+  .info-val { font-size: 12px; }
+}
 </style>
 </head>
 <body>
@@ -356,7 +462,8 @@ tr:hover td{background:#f9fdfb}
 <div id="loginPage">
   <!-- KIRI: Hero -->
   <div class="login-left">
-    <div class="login-left-bg"></div>
+    <div class="login-left-bg">
+    </div>
     <div class="login-left-overlay"></div>
     <div class="login-left-content">
     <div class="login-brand">
@@ -423,6 +530,7 @@ tr:hover td{background:#f9fdfb}
 </div>
  
 <!-- ══════════ APP SHELL ══════════ -->
+ <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div id="app" class="hidden">
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
@@ -444,8 +552,11 @@ tr:hover td{background:#f9fdfb}
  
   <!-- MAIN -->
   <div class="main-area">
-    <div class="topbar">
-      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+ <div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="menu-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></div>
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+  </div>
       <div class="topbar-right">
         <div class="notif-btn" onclick="showSection('jadwal')" title="Notifikasi"><i class="ti ti-bell"></i><div class="notif-dot"></div></div>
         <div class="user-chip">
@@ -809,7 +920,7 @@ SECTIONS.registrasi = ()=>{
     <td>${fmt(a.nik)}</td>
     <td>${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</td>
     <td>${fmtDate(a.tglLahir || a.tgl_lahir)} <span class="text-muted">(${hitungUsia(a.tglLahir || a.tgl_lahir)} bln)</span></td>
-    <td>${fmt(a.namaIbu)}</td>
+    <td>${fmt(a.nama_ibu)}</td>
     <td>${fmt(a.wilayah)}</td>
     <td>${fmt(a.posyandu)}</td>
     <td><div class="table-action">
@@ -830,13 +941,13 @@ SECTIONS.registrasi = ()=>{
 function filterAnak(){
   const q=document.getElementById('searchAnak').value.toLowerCase();
   const anak=DB.get('anak')||[];
-  const filtered=anak.filter(a=>(a.nama+a.nik+a.wilayah+a.namaIbu).toLowerCase().includes(q));
+  const filtered=anak.filter(a=>(a.nama+a.nik+a.wilayah+a.nama_ibu).toLowerCase().includes(q));
   const tbody=document.querySelector('#tblAnak tbody');
   tbody.innerHTML=filtered.map(a=>`<tr>
     <td>${fmt(a.nama)}</td><td>${fmt(a.nik)}</td>
     <td>${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</td>
     <td>${fmtDate(a.tglLahir || a.tgl_lahir)} <span class="text-muted">(${hitungUsia(a.tglLahir || a.tgl_lahir)} bln)</span></td>
-    <td>${fmt(a.namaIbu)}</td><td>${fmt(a.wilayah)}</td><td>${fmt(a.posyandu)}</td>
+    <td>${fmt(a.nama_ibu)}</td><td>${fmt(a.wilayah)}</td><td>${fmt(a.posyandu)}</td>
     <td><div class="table-action">
       <button class="btn btn-sm btn-icon" onclick="detailAnak(${a.id})"><i class="ti ti-eye"></i></button>
       <button class="btn btn-sm btn-icon" onclick="editAnak(${a.id})"><i class="ti ti-edit"></i></button>
@@ -855,7 +966,7 @@ function formAnak(data={}){
     <div class="form-group"><label>Tanggal Lahir</label><input type="date" id="f_tgl" value="${data.tglLahir || data.tgl_lahir||''}"></div>
     <div class="form-group"><label>Jenis Kelamin</label><select id="f_jk"><option value="L" ${data.jenisKelamin==='L'||data.jenis_kelamin==='L'?'selected':''}>Laki-laki</option><option value="P" ${data.jenisKelamin==='P'||data.jenis_kelamin==='P'?'selected':''}>Perempuan</option></select></div>
 
-    <div class="form-group col-span-2"><label>Nama Ibu</label><input id="f_namaIbu" value="${data.namaIbu||data.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
+    <div class="form-group col-span-2"><label>Nama Ibu</label><input id="f_nama_ibu" value="${data.nama_ibu||data.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
     <div class="form-group"><label>Pekerjaan Ibu</label><input id="f_pekerjaanIbu" value="${data.pekerjaanIbu||data.pekerjaan_ibu||''}" placeholder="Contoh: Ibu Rumah Tangga"></div>
     <div class="form-group"><label>NIK Ibu</label><input id="f_nikIbu" value="${data.nikIbu||data.nik_ibu||''}" placeholder="NIK ibu"></div>
 
@@ -910,7 +1021,7 @@ function detailAnak(id){
     <div class="info-row"><div class="info-label">Wilayah / Posyandu</div><div class="info-val">${fmt(a.wilayah)} / ${fmt(a.posyandu)}</div></div>
 
     <div style="font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em">Data Ibu</div>
-    <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.namaIbu||a.nama_ibu)}</div></div>
+    <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.nama_ibu||a.nama_ibu)}</div></div>
     <div class="info-row"><div class="info-label">NIK Ibu</div><div class="info-val">${fmt(a.nikIbu||a.nik_ibu)}</div></div>
     <div class="info-row"><div class="info-label">Pekerjaan Ibu</div><div class="info-val">${fmt(a.pekerjaanIbu||a.pekerjaan_ibu)}</div></div>
     <div class="info-row"><div class="info-label">No. HP</div><div class="info-val">${fmt(a.noHP||a.no_hp)}</div></div>
@@ -939,7 +1050,7 @@ function getFormAnak(){
     nama:          document.getElementById('f_nama').value.trim(),
     tglLahir:      document.getElementById('f_tgl').value,
     jenisKelamin:  document.getElementById('f_jk').value,
-    namaIbu:       document.getElementById('f_namaIbu').value.trim(),
+    nama_ibu:       document.getElementById('f_nama_ibu').value.trim(),
     pekerjaanIbu:  document.getElementById('f_pekerjaanIbu').value.trim(),
     nikIbu:        document.getElementById('f_nikIbu').value.trim(),
     namaAyah:      document.getElementById('f_namaAyah').value.trim(),
@@ -978,10 +1089,10 @@ async function simpanAnak(){
         const resOrtu = await fetch('/api/pengguna',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.namaIbu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''})
+          body: JSON.stringify({username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.nama_ibu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''})
         });
         const resultOrtu = await resOrtu.json();
-        users.push({id:resultOrtu.data.id,username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.namaIbu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''});
+        users.push({id:resultOrtu.data.id,username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.nama_ibu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''});
         DB.set('pengguna', users);
         showToast(`Anak disimpan & akun orang tua dibuat (NIK: ${d.nikIbu})`,'success');
       } else {
@@ -1066,24 +1177,45 @@ function hitungZScore(val,median,s1,s2,s3){
   return +((diff+s1+s2)/s3).toFixed(2);
 }
 function autoHitungZScore(){
-  const idAnak=parseInt(document.getElementById('u_idAnak').value);
-  const tgl=document.getElementById('u_tgl').value;
-  const bb=parseFloat(document.getElementById('u_bb').value);
-  const tb=parseFloat(document.getElementById('u_tb').value);
-  if(!idAnak||!tgl||!tb){showToast('Isi TB dan pilih anak dahulu','error');return;}
-  const anak=DB.get('anak').find(a=>a.id===idAnak);if(!anak)return;
-  const usia=hitungUsia(anak.tglLahir);
-  const jk=anak.jenisKelamin==='L'?'L':'P';
-  const [mT,s1T,s2T,s3T]=interpolateWHO(WHO_TBU,jk,usia);
-  const zTbu=hitungZScore(tb,mT,s1T,s2T,s3T);
-  document.getElementById('u_ztbu').value=zTbu;
-  if(bb){const [mB,s1B,s2B,s3B]=interpolateWHO(WHO_BBU,jk,usia);document.getElementById('u_zbbu').value=hitungZScore(bb,mB,s1B,s2B,s3B);}
-  let status='Normal';
-  if(zTbu<-3)status='Stunting Berat';
-  else if(zTbu<-2)status='Stunting';
-  else if(zTbu<-1)status='Perlu Pantau';
-  document.getElementById('u_status').value=status;
-  showToast('Z-Score dihitung otomatis: TB/U = '+zTbu);
+  const idAnak = parseInt(document.getElementById('u_idAnak').value);
+  const tgl    = document.getElementById('u_tgl').value;
+  const bb     = parseFloat(document.getElementById('u_bb').value);
+  const tb     = parseFloat(document.getElementById('u_tb').value);
+
+  if(!idAnak || !tgl || !tb){
+    showToast('Isi TB dan pilih anak dahulu','error');
+    return;
+  }
+
+  const anak = DB.get('anak').find(a => a.id === idAnak);
+  if(!anak) return;
+
+  // ✅ FIX 1 - pakai snake_case
+  const usia = hitungUsia(anak.tgl_lahir);
+  const jk   = anak.jenis_kelamin === 'L' ? 'L' : 'P';
+
+  // ✅ FIX 2 - validasi usia sebelum hitung
+  if(!usia || isNaN(usia)){
+    showToast('Tanggal lahir anak tidak valid','error');
+    return;
+  }
+
+  const [mT,s1T,s2T,s3T] = interpolateWHO(WHO_TBU, jk, usia);
+  const zTbu = hitungZScore(tb, mT, s1T, s2T, s3T);
+  document.getElementById('u_ztbu').value = zTbu;
+
+  if(bb){
+    const [mB,s1B,s2B,s3B] = interpolateWHO(WHO_BBU, jk, usia);
+    document.getElementById('u_zbbu').value = hitungZScore(bb, mB, s1B, s2B, s3B);
+  }
+
+  let status = 'Normal';
+  if(zTbu < -3)      status = 'Stunting Berat';
+  else if(zTbu < -2) status = 'Stunting';
+  else if(zTbu < -1) status = 'Perlu Pantau';
+
+  document.getElementById('u_status').value = status;
+  showToast('Z-Score dihitung otomatis: TB/U = ' + zTbu);
 }
 function formUkur(data={},anak=[]){
   return `
@@ -1379,16 +1511,19 @@ function reminderBadge(tgl, published){
 }
 
 SECTIONS.jadwal = ()=>{
-  let jdwl=DB.get('jadwal')||[];
-  const canEdit=currentUser.role==='admin'||currentUser.role==='bidan';
-  const isOrtu=currentUser.role==='ortu';
-  const posyanduKu=getPosyanduOrtu();
+  // ✅ Baca dari global variable, bukan dari DOM
+  const savedFilter = window._jadwalFilter || '';
+
+  let jdwl = DB.get('jadwal') || [];
+  const canEdit = currentUser.role==='admin' || currentUser.role==='bidan';
+  const isOrtu = currentUser.role==='ortu';
+  const posyanduKu = getPosyanduOrtu();
 
   if(isOrtu){
-    jdwl=jdwl.filter(j=>(j.posyandu===posyanduKu)&&j.published==1);
+    jdwl = jdwl.filter(j=>(j.posyandu===posyanduKu) && j.published==1);
   }
 
-  const sorted=[...jdwl].sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
+  const sorted = [...jdwl].sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
 
   const reminderItems=sorted.filter(j=>{const h=hariMenuju(j.tanggal);return h>=0&&h<=3;});
   const reminderBanner = isOrtu && reminderItems.length>0 ? `
@@ -1410,26 +1545,25 @@ SECTIONS.jadwal = ()=>{
     Menampilkan jadwal untuk posyandu: <b>${posyanduKu||'—'}</b>
   </div>` : '';
 
-  const allPos=[...new Set((DB.get('jadwal')||[]).map(j=>j.posyandu).filter(Boolean))];
+  const allPos = [...new Set((DB.get('jadwal')||[]).map(j=>j.posyandu).filter(Boolean))];
   const filterBar = canEdit ? `
   <div class="search-row mb-16">
-    <select id="filterPosJdwl" onchange="renderSection('jadwal')" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none">
+    <select id="filterPosJdwl" onchange="window._jadwalFilter=this.value; renderSection('jadwal')" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none">
       <option value="">— Semua Posyandu —</option>
-      ${allPos.map(p=>`<option value="${p}">${p}</option>`).join('')}
+      ${allPos.map(p=>`<option value="${p}" ${p===savedFilter?'selected':''}>${p}</option>`).join('')}
     </select>
     <div style="flex:1"></div>
     <button class="btn btn-primary" onclick="tambahJadwal()"><i class="ti ti-plus"></i>Tambah Jadwal</button>
   </div>` : '';
 
-  let tampil=sorted;
-  if(canEdit){
-    const filterEl=document.getElementById('filterPosJdwl');
-    const filterVal=filterEl?filterEl.value:'';
-    if(filterVal) tampil=sorted.filter(j=>j.posyandu===filterVal);
+  // ✅ Filter pakai savedFilter dari global variable
+  let tampil = sorted;
+  if(canEdit && savedFilter){
+    tampil = sorted.filter(j=>j.posyandu===savedFilter);
   }
 
-    const drafts = canEdit ? tampil.filter(j=>j.published==0||!j.published) : [];
-    const published = canEdit ? tampil.filter(j=>j.published==1) : tampil;
+  const drafts = canEdit ? tampil.filter(j=>j.published==0||!j.published) : [];
+  const published = canEdit ? tampil.filter(j=>j.published==1) : tampil;
 
   function renderItem(j){
     const d=new Date(j.tanggal),day=d.getDate(),mon=d.toLocaleDateString('id-ID',{month:'short'});
@@ -1638,7 +1772,6 @@ SECTIONS.pengguna = ()=>{
   <div class="alert alert-info mb-16"><i class="ti ti-info-circle"></i><div><b>Sistem Login:</b> <b>Bidan</b> login hanya dengan <b>NIP</b> (tanpa password) — admin cukup input NIP bidan. <b>Orang Tua</b> login hanya dengan <b>NIK Ibu</b> — akun dibuat <i>otomatis</i> saat bidan mendaftarkan anak, atau tambahkan manual di sini.</div></div>
   <div class="search-row" style="justify-content:flex-end;gap:10px">
     <button class="btn" onclick="tambahUser('bidan')"><i class="ti ti-user-plus"></i>Tambah Bidan</button>
-    <button class="btn btn-primary" onclick="tambahUser('ortu')"><i class="ti ti-user-plus"></i>Buat Akun Orang Tua</button>
   </div>
   <div class="grid-2 mb-16" style="margin-bottom:14px">
     <div class="metric"><div class="metric-label"><i class="ti ti-users"></i>Total Akun</div><div class="metric-val">${users.length}</div></div>
@@ -1659,7 +1792,7 @@ function formUser(data={}, defaultRole='admin'){
     <div class="form-group"><label>Role</label><select id="p_role" onchange="toggleOrtuFields()">
       <option value="admin" ${role==='admin'?'selected':''}>Admin</option>
       <option value="bidan" ${role==='bidan'?'selected':''}>Bidan</option>
-      <option value="ortu" ${role==='ortu'?'selected':''}>Orang Tua</option>
+    
     </select></div>
     <div class="form-group" id="p_nip_wrap" ${isOrtu?'style="display:none"':''}>
       <label>NIP <span style="color:var(--text3);font-size:11px">(digunakan untuk login)</span></label>
@@ -1971,7 +2104,7 @@ SECTIONS.profil = ()=>{
       <div class="card-title"><i class="ti ti-users"></i> Data Keluarga</div>
 
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Data Ibu</div>
-      <div class="form-group mb-12"><label>Nama Ibu</label><input id="or_namaIbu" value="${a.namaIbu||a.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
+      <div class="form-group mb-12"><label>Nama Ibu</label><input id="or_nama_ibu" value="${a.nama_ibu||a.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
       <div class="form-group mb-12"><label>NIK Ibu</label><input id="or_nikIbu" value="${a.nikIbu||a.nik_ibu||''}" placeholder="NIK ibu"></div>
       <div class="form-group mb-12"><label>Pekerjaan Ibu</label><input id="or_pekerjaanIbu" value="${a.pekerjaanIbu||a.pekerjaan_ibu||''}" placeholder="Contoh: Ibu Rumah Tangga"></div>
       <div class="form-group mb-12"><label>No. HP</label><input id="or_hp" value="${a.noHP||a.no_hp||''}" placeholder="08xxx"></div>
@@ -2067,7 +2200,7 @@ SECTIONS.saran = ()=>{
           placeholder="Tuliskan saran atau masukan Anda tentang pelayanan posyandu..."
           style="width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
       </div>
-      <button class="btn btn-primary" onclick="kirimSaran()" style="width:100%;justify-content:center;padding:13px">
+      <button class="btn btn-primary" onclick="kirimSaran()" style="width:100%;margin-top:10px;justify-content:center;padding:13px">
         <i class="ti ti-send"></i> Kirim Saran
       </button>
     </div>
@@ -2252,7 +2385,7 @@ async function kirimSaran(){
   if(!pesan){showToast('Tulis pesan terlebih dahulu','error');return;}
   if(!rating){showToast('Berikan rating terlebih dahulu','error');return;}
 
-  const hasil = analisisSentimen(pesan, rating);
+  
   const posyanduKu = getPosyanduOrtu();
 
   try {
@@ -2264,7 +2397,6 @@ async function kirimSaran(){
         nama_ortu: currentUser.nama,
         posyandu: posyanduKu, // ← tambah ini
         pesan, rating,
-        skor_sentimen: hasil.skor
       })
     });
     const result = await res.json();
@@ -2300,7 +2432,7 @@ function uploadFotoProfil(input){
 
 async function simpanProfilOrtu(idAnak){
   const d = {
-    namaIbu:       document.getElementById('or_namaIbu').value.trim(),
+    nama_ibu:       document.getElementById('or_nama_ibu').value.trim(),
     nikIbu:        document.getElementById('or_nikIbu').value.trim(),
     pekerjaanIbu:  document.getElementById('or_pekerjaanIbu').value.trim(),
     noHP:          document.getElementById('or_hp').value.trim(),
@@ -2316,15 +2448,25 @@ async function simpanProfilOrtu(idAnak){
   if(!d.nama){showToast('Nama anak wajib diisi','error');return;}
 
   try {
-    await fetch(`/api/balita/${idAnak}`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(d)
-    });
-  } catch(e){
+  const res = await fetch(`/api/balita/${idAnak}`, {  // ✅ simpan ke 'res'
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(d)
+  });
+
+  if (!res.ok) {                                       // ✅ cek HTTP error
     showToast('Gagal menyimpan ke server','error');
     return;
   }
+
+  const result = await res.json();
+  console.log('result:', result);
+
+} catch(e) {
+  console.error(e);                                    // ✅ lihat error aslinya
+  showToast('Gagal menyimpan ke server','error');
+  return;
+}
 
   DB.set('anak', (DB.get('anak')||[]).map(a=>
     a.id==idAnak ? {...a, ...d} : a
@@ -2483,7 +2625,7 @@ function detailAnak(id){
   <div class="info-row"><div class="info-label">NIK</div><div class="info-val">${fmt(a.nik)}</div></div>
   <div class="info-row"><div class="info-label">Jenis Kelamin</div><div class="info-val">${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</div></div>
   <div class="info-row"><div class="info-label">Tanggal Lahir</div><div class="info-val">${fmtDate(a.tglLahir || a.tgl_lahir)} (${hitungUsia(a.tglLahir || a.tgl_lahir)} bulan)</div></div>
-  <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.namaIbu)}</div></div>
+  <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.nama_ibu)}</div></div>
   <div class="info-row"><div class="info-label">No. HP</div><div class="info-val">${fmt(a.noHP)}</div></div>
   <div class="info-row"><div class="info-label">Alamat</div><div class="info-val">${fmt(a.alamat)}</div></div>
   <div class="info-row"><div class="info-label">Wilayah / Posyandu</div><div class="info-val">${fmt(a.wilayah)} / ${fmt(a.posyandu)}</div></div>
@@ -2500,6 +2642,19 @@ function detailAnak(id){
 function attachHandlers(sec){
   // nothing special needed beyond inline handlers
 }
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+}
+
+// Tutup sidebar otomatis saat pilih menu di HP
+document.addEventListener('click', function(e) {
+  if(e.target.closest('.nav-item') && window.innerWidth <= 768) {
+    toggleSidebar();
+  }
+});
 </script>
 </body>
 </html>
