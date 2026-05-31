@@ -209,8 +209,20 @@ tr:hover td{background:#f9fdfb}
 .sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
 .brand-row{display:flex;align-items:center;gap:10px}
 .brand-icon{width:38px;height:38px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
-.brand-name{font-size:15px;font-weight:600;color:var(--text)}
-.brand-sub{font-size:10px;color:var(--text2);line-height:1.3}
+.brand-name {
+  font-size: 18px; /* ← lebih besar */
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'DM Serif Display', serif; /* ← ganti font */
+  margin-left: -25px;
+}
+.brand-sub {
+  font-size: 11px; /* ← sedikit lebih besar */
+  color: var(--text2);
+  line-height: 1.3;
+  font-family: 'DM Serif Display', serif;
+  margin-left: -25px; 
+}
 .sidebar-role{margin:10px 14px;padding:8px 12px;background:var(--green-light);border-radius:8px;font-size:12px;color:var(--green-dark);font-weight:500;display:flex;align-items:center;gap:6px}
 .sidebar-role i{font-size:15px}
 .nav-section{font-size:10px;font-weight:600;color:var(--text3);padding:10px 18px 4px;letter-spacing:.07em;text-transform:uppercase}
@@ -414,15 +426,15 @@ tr:hover td{background:#f9fdfb}
 <div id="app" class="hidden">
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-row">
-        <div class="brand-icon"><i class="ti ti-heart-rate-monitor"></i></div>
-        <div>
-          <div class="brand-name">SiGizi</div>
-          <div class="brand-sub">Pkm. Sungai Durian</div>
-        </div>
-      </div>
+   <div class="sidebar-brand">
+  <div class="brand-row" style="display:flex;align-items:center;gap:6px;margin-left:-30px;">
+    <img src="{{ asset('sigizi_logo_caps.svg') }}" alt="SIGIZI" style="height:70px;width:auto;">
+    <div>
+      <div class="brand-name">SIGIZI</div>
+      <div class="brand-sub">Puskesmas Sungai Durian</div>
     </div>
+  </div>
+</div>
     <div class="sidebar-role" id="sidebarRole"><i class="ti ti-shield"></i> <span id="roleLabel">Admin</span></div>
     <nav id="navMenu"></nav>
     <div class="sidebar-footer">
@@ -468,7 +480,8 @@ const DB = {
     jadwal:     @json($jadwal),
     notifikasi: @json($notifikasi),
     anak:       @json($anak),
-    pengukuran: @json($pengukuran)
+    pengukuran: @json($pengukuran),
+    saran: @json($saran)
   },
   get(k) { return this.state[k]; },
 
@@ -506,6 +519,7 @@ const DB = {
       posyandu:   'posyandu',
       users:      'pengguna',
       artikel:    'artikel',
+      saran: 'saran'
     };
     if (map[k]) this._apiSave(map[k], last);
   },
@@ -582,7 +596,7 @@ function updateLoginStats(){
   const anak = DB.get('anak')||[];
   const ukur = DB.get('pengukuran')||[];
   const latest = {};
-  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const stunt = Object.values(latest).filter(u=>u.status==='Stunting'||u.status==='Stunting Berat').length;
   const el1=document.getElementById('statBalita'), el2=document.getElementById('statStunting');
   if(el1) el1.textContent = anak.length;
@@ -611,6 +625,7 @@ const MENUS = {
     {sec:'artikel',icon:'ti-article',label:'Artikel Gizi',group:'Informasi'},
     {sec:'jadwal',icon:'ti-calendar-event',label:'Jadwal & Notifikasi'},
     {sec:'laporan',icon:'ti-chart-bar',label:'Laporan',group:'Manajemen'},
+    {sec:'saran_admin', icon:'ti-message-circle', label:'Saran & Masukan'},
     {sec:'pengguna',icon:'ti-users',label:'Manajemen Pengguna'},
     {sec:'pengaturan',icon:'ti-settings',label:'Pengaturan Wilayah',group:'Pengaturan'},
     {sec:'profil',icon:'ti-user-circle',label:'Profil Saya',group:'Akun'},
@@ -623,6 +638,7 @@ const MENUS = {
     {sec:'artikel',icon:'ti-article',label:'Artikel Gizi',group:'Informasi'},
     {sec:'jadwal',icon:'ti-calendar-event',label:'Jadwal'},
     {sec:'laporan',icon:'ti-chart-bar',label:'Laporan',group:'Lainnya'},
+    {sec:'saran_admin', icon:'ti-message-circle', label:'Saran & Masukan'},
     {sec:'profil',icon:'ti-user-circle',label:'Profil Saya',group:'Akun'},
   ],
   ortu:[
@@ -630,6 +646,7 @@ const MENUS = {
     {sec:'perkembangan',icon:'ti-trending-up',label:'Perkembangan Anak'},
     {sec:'artikel',icon:'ti-article',label:'Artikel Gizi'},
     {sec:'jadwal',icon:'ti-calendar-event',label:'Jadwal Posyandu'},
+    {sec:'saran', icon:'ti-message-circle', label:'Saran & Masukan'},
     {sec:'profil',icon:'ti-user-circle',label:'Profil Saya',group:'Akun'},
   ]
 };
@@ -726,7 +743,7 @@ SECTIONS.dashboard = ()=>{
   const anak = DB.get('anak')||[];
   const ukur = DB.get('pengukuran')||[];
   const latest = {};
-  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const statuses = Object.values(latest).map(u=>u.status);
   const total=anak.length, stunting=statuses.filter(s=>s==='Stunting'||s==='Stunting Berat').length;
   const normal=statuses.filter(s=>s==='Normal').length, pantau=statuses.filter(s=>s==='Perlu Pantau').length;
@@ -745,7 +762,7 @@ SECTIONS.dashboard = ()=>{
     </div>`).join('');
  
   const rows=terbaru.map(u=>{
-    const a=anak.find(x=>x.id===u.idAnak)||{};
+    const a=anak.find(x=>x.id===(u.idAnak || u.id_anak))||{};
     return `<tr>
       <td>${fmt(a.nama)}</td>
       <td>${hitungUsia(a.tglLahir || a.tgl_lahir)} bln</td>
@@ -835,11 +852,17 @@ function formAnak(data={}){
   <div class="form-group"><label>NIK Anak</label><input id="f_nik" value="${data.nik||''}" placeholder="16 digit NIK"></div>
   <div class="grid-2">
     <div class="form-group col-span-2"><label>Nama Lengkap Anak</label><input id="f_nama" value="${data.nama||''}" placeholder="Nama lengkap"></div>
-    <div class="form-group"><label>Tanggal Lahir</label><input type="date" id="f_tgl" value="${data.tglLahir || a.tgl_lahir||''}"></div>
-    <div class="form-group"><label>Jenis Kelamin</label><select id="f_jk"><option value="L" ${data.jenisKelamin==='L'?'selected':''}>Laki-laki</option><option value="P" ${data.jenisKelamin==='P'?'selected':''}>Perempuan</option></select></div>
-    <div class="form-group col-span-2"><label>Nama Ibu</label><input id="f_namaIbu" value="${data.namaIbu||''}" placeholder="Nama ibu kandung"></div>
-    <div class="form-group"><label>NIK Ibu</label><input id="f_nikIbu" value="${data.nikIbu||''}" placeholder="NIK ibu"></div>
-    <div class="form-group"><label>No. HP</label><input id="f_hp" value="${data.noHP||''}" placeholder="08xxx"></div>
+    <div class="form-group"><label>Tanggal Lahir</label><input type="date" id="f_tgl" value="${data.tglLahir || data.tgl_lahir||''}"></div>
+    <div class="form-group"><label>Jenis Kelamin</label><select id="f_jk"><option value="L" ${data.jenisKelamin==='L'||data.jenis_kelamin==='L'?'selected':''}>Laki-laki</option><option value="P" ${data.jenisKelamin==='P'||data.jenis_kelamin==='P'?'selected':''}>Perempuan</option></select></div>
+
+    <div class="form-group col-span-2"><label>Nama Ibu</label><input id="f_namaIbu" value="${data.namaIbu||data.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
+    <div class="form-group"><label>Pekerjaan Ibu</label><input id="f_pekerjaanIbu" value="${data.pekerjaanIbu||data.pekerjaan_ibu||''}" placeholder="Contoh: Ibu Rumah Tangga"></div>
+    <div class="form-group"><label>NIK Ibu</label><input id="f_nikIbu" value="${data.nikIbu||data.nik_ibu||''}" placeholder="NIK ibu"></div>
+
+    <div class="form-group col-span-2"><label>Nama Ayah</label><input id="f_namaAyah" value="${data.namaAyah||data.nama_ayah||''}" placeholder="Nama ayah"></div>
+    <div class="form-group"><label>Pekerjaan Ayah</label><input id="f_pekerjaanAyah" value="${data.pekerjaanAyah||data.pekerjaan_ayah||''}" placeholder="Contoh: Wiraswasta"></div>
+    <div class="form-group"><label>No. HP</label><input id="f_hp" value="${data.noHP||data.no_hp||''}" placeholder="08xxx"></div>
+
     <div class="form-group col-span-2"><label>Alamat</label><input id="f_alamat" value="${data.alamat||''}" placeholder="Alamat lengkap"></div>
     <div class="form-group"><label>Wilayah</label><select id="f_wil" onchange="filterPosyanduForm()">${wil.length?wil.map(w=>`<option ${data.wilayah===w?'selected':''}>${w}</option>`).join(''):'<option>— Belum ada wilayah —</option>'}</select></div>
     <div class="form-group"><label>Posyandu</label><select id="f_pos">${pos.length?pos.map(p=>`<option ${data.posyandu===p?'selected':''}>${p}</option>`).join(''):'<option>— Belum ada posyandu —</option>'}</select></div>
@@ -870,30 +893,62 @@ function editAnak(id){
 }
  
 function detailAnak(id){
-  const a=DB.get('anak').find(x=>x.id===id);
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
-  const last=ukur[0];
-  openModal(`<div class="modal-header"><div class="modal-title">Profil — ${a.nama}</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>
-  <div class="info-row"><div class="info-label">NIK</div><div class="info-val">${fmt(a.nik)}</div></div>
-  <div class="info-row"><div class="info-label">Jenis Kelamin</div><div class="info-val">${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</div></div>
-  <div class="info-row"><div class="info-label">Tanggal Lahir</div><div class="info-val">${fmtDate(a.tglLahir || a.tgl_lahir)} (${hitungUsia(a.tglLahir || a.tgl_lahir)} bulan)</div></div>
-  <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.namaIbu)}</div></div>
-  <div class="info-row"><div class="info-label">No. HP</div><div class="info-val">${fmt(a.noHP)}</div></div>
-  <div class="info-row"><div class="info-label">Alamat</div><div class="info-val">${fmt(a.alamat)}</div></div>
-  <div class="info-row"><div class="info-label">Wilayah / Posyandu</div><div class="info-val">${fmt(a.wilayah)} / ${fmt(a.posyandu)}</div></div>
-  ${last?`<div style="margin-top:14px"><b>Pengukuran Terakhir</b> (${fmtDate(last.tanggal)})</div>
-  <div class="info-row"><div class="info-label">BB / TB</div><div class="info-val">${last.bb} kg / ${last.tb} cm</div></div>
-  <div class="info-row"><div class="info-label">Z-Score TB/U</div><div class="info-val">${last.zscore_tbu}</div></div>
-  <div class="info-row"><div class="info-label">Status Gizi</div><div class="info-val">${statusBadge(last.status)}</div></div>`:'<div class="alert alert-info mt-12"><i class="ti ti-info-circle"></i>Belum ada data pengukuran.</div>'}
-  <div class="modal-footer"><button class="btn" onclick="closeModal()">Tutup</button></div>`);
+  const a = DB.get('anak').find(x=>x.id===id);
+  const ukur = DB.get('pengukuran').filter(u=>(u.idAnak||u.id_anak)===id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+  const last = ukur[0];
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">Profil — ${a.nama}</div>
+      <div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div>
+    </div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Data Anak</div>
+    <div class="info-row"><div class="info-label">NIK</div><div class="info-val">${fmt(a.nik)}</div></div>
+    <div class="info-row"><div class="info-label">Jenis Kelamin</div><div class="info-val">${(a.jenisKelamin||a.jenis_kelamin)==='L'?'Laki-laki':'Perempuan'}</div></div>
+    <div class="info-row"><div class="info-label">Tanggal Lahir</div><div class="info-val">${fmtDate(a.tglLahir||a.tgl_lahir)} (${hitungUsia(a.tglLahir||a.tgl_lahir)} bulan)</div></div>
+    <div class="info-row"><div class="info-label">Alamat</div><div class="info-val">${fmt(a.alamat)}</div></div>
+    <div class="info-row"><div class="info-label">Wilayah / Posyandu</div><div class="info-val">${fmt(a.wilayah)} / ${fmt(a.posyandu)}</div></div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em">Data Ibu</div>
+    <div class="info-row"><div class="info-label">Nama Ibu</div><div class="info-val">${fmt(a.namaIbu||a.nama_ibu)}</div></div>
+    <div class="info-row"><div class="info-label">NIK Ibu</div><div class="info-val">${fmt(a.nikIbu||a.nik_ibu)}</div></div>
+    <div class="info-row"><div class="info-label">Pekerjaan Ibu</div><div class="info-val">${fmt(a.pekerjaanIbu||a.pekerjaan_ibu)}</div></div>
+    <div class="info-row"><div class="info-label">No. HP</div><div class="info-val">${fmt(a.noHP||a.no_hp)}</div></div>
+
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em">Data Ayah</div>
+    <div class="info-row"><div class="info-label">Nama Ayah</div><div class="info-val">${fmt(a.namaAyah||a.nama_ayah)}</div></div>
+    <div class="info-row"><div class="info-label">Pekerjaan Ayah</div><div class="info-val">${fmt(a.pekerjaanAyah||a.pekerjaan_ayah)}</div></div>
+
+    ${last?`
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.05em">Pengukuran Terakhir (${fmtDate(last.tanggal)})</div>
+    <div class="info-row"><div class="info-label">BB / TB</div><div class="info-val">${last.bb} kg / ${last.tb} cm</div></div>
+    <div class="info-row"><div class="info-label">Z-Score TB/U</div><div class="info-val">${last.zscore_tbu}</div></div>
+    <div class="info-row"><div class="info-label">Status Gizi</div><div class="info-val">${statusBadge(last.status)}</div></div>
+    ${last.catatan?`<div class="info-row"><div class="info-label">Catatan</div><div class="info-val">${last.catatan}</div></div>`:''}
+    `:'<div class="alert alert-info mt-12"><i class="ti ti-info-circle"></i>Belum ada data pengukuran.</div>'}
+
+    <div class="modal-footer">
+      <button class="btn" onclick="grafikAnak(${id})" style="gap:6px"><i class="ti ti-chart-line"></i>Lihat Grafik</button>
+      <button class="btn btn-primary" onclick="closeModal()">Tutup</button>
+    </div>`);
 }
  
 function getFormAnak(){
-  return {nik:document.getElementById('f_nik').value.trim(),nama:document.getElementById('f_nama').value.trim(),
-    tglLahir:document.getElementById('f_tgl').value,jenisKelamin:document.getElementById('f_jk').value,
-    namaIbu:document.getElementById('f_namaIbu').value.trim(),nikIbu:document.getElementById('f_nikIbu').value.trim(),
-    noHP:document.getElementById('f_hp').value.trim(),alamat:document.getElementById('f_alamat').value.trim(),
-    wilayah:document.getElementById('f_wil').value,posyandu:document.getElementById('f_pos').value};
+  return {
+    nik:           document.getElementById('f_nik').value.trim(),
+    nama:          document.getElementById('f_nama').value.trim(),
+    tglLahir:      document.getElementById('f_tgl').value,
+    jenisKelamin:  document.getElementById('f_jk').value,
+    namaIbu:       document.getElementById('f_namaIbu').value.trim(),
+    pekerjaanIbu:  document.getElementById('f_pekerjaanIbu').value.trim(),
+    nikIbu:        document.getElementById('f_nikIbu').value.trim(),
+    namaAyah:      document.getElementById('f_namaAyah').value.trim(),
+    pekerjaanAyah: document.getElementById('f_pekerjaanAyah').value.trim(),
+    noHP:          document.getElementById('f_hp').value.trim(),
+    alamat:        document.getElementById('f_alamat').value.trim(),
+    wilayah:       document.getElementById('f_wil').value,
+    posyandu:      document.getElementById('f_pos').value
+  };
 }
  
 async function simpanAnak(){
@@ -952,7 +1007,7 @@ async function hapusAnak(id){
   if(!confirm('Hapus data anak ini?'))return;
   await fetch(`/api/balita/${id}/delete`,{method:'POST'});
   DB.set('anak',(DB.get('anak')||[]).filter(a=>a.id!=id));
-  DB.set('pengukuran',(DB.get('pengukuran')||[]).filter(u=>u.idAnak!=id));
+  DB.set('pengukuran',(DB.get('pengukuran')||[]).filter(u=>(u.idAnak || u.id_anak)!=id));
   showToast('Data dihapus');renderSection('registrasi');
 }
  
@@ -963,7 +1018,7 @@ SECTIONS.pengukuran = ()=>{
   const ukur=DB.get('pengukuran')||[];
   const anak=DB.get('anak')||[];
   const rows=ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).map(u=>{
-    const a=anak.find(x=>x.id===u.idAnak)||{};
+    const a=anak.find(x=>x.id===(u.idAnak || u.id_anak))||{};
     return `<tr>
       <td>${fmtDate(u.tanggal)}</td>
       <td>${fmt(a.nama)}</td>
@@ -1092,7 +1147,7 @@ SECTIONS.deteksi = ()=>{
   const anak=DB.get('anak')||[];
   const ukur=DB.get('pengukuran')||[];
   const latest={};
-  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const stunt=anak.filter(a=>latest[a.id]&&(latest[a.id].status==='Stunting'||latest[a.id].status==='Stunting Berat'));
   const pantau=anak.filter(a=>latest[a.id]&&latest[a.id].status==='Perlu Pantau');
   const normal=anak.filter(a=>latest[a.id]&&latest[a.id].status==='Normal');
@@ -1129,7 +1184,7 @@ function switchDeteksiTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   const anak=DB.get('anak')||[];const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const filterMap={stunting:['Stunting','Stunting Berat'],pantau:['Perlu Pantau'],normal:['Normal']};
   const filtered=anak.filter(a=>latest[a.id]&&filterMap[tab].includes(latest[a.id].status));
   document.getElementById('deteksiBody').innerHTML=filtered.map(a=>{const u=latest[a.id];return `<tr>
@@ -1181,7 +1236,7 @@ function bacaArtikel(id){
   <div class="artikel-meta mb-12"><i class="ti ti-user" style="font-size:13px"></i> ${a.penulis} · ${fmtDate(a.tanggal)}</div>
   ${fotoHtml}
   ${videoHtml}
-  <div class="artikel-body">${a.isi}</div>
+  <div class="artikel-body">${(a.isi||'').replace(/\n/g,'<br>')}</div>
   <div class="modal-footer">${canEdit?`<button class="btn" onclick="editArtikel(${a.id})"><i class="ti ti-edit"></i>Edit</button><button class="btn btn-danger" onclick="hapusArtikel(${a.id})"><i class="ti ti-trash"></i>Hapus</button>`:''}
   <button class="btn btn-primary" onclick="closeModal()">Tutup</button></div>`);
 }
@@ -1197,8 +1252,6 @@ function formArtikel(data={}){
   <div class="form-group">
     <label><i class="ti ti-photo" style="font-size:13px;vertical-align:middle"></i> Foto / Gambar Artikel <span style="font-weight:400;color:var(--text3)">(wajib ada)</span></label>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <input id="a_foto" value="${data.foto||''}" placeholder="Tempel link gambar dari internet (https://...)" style="border-radius:var(--radius);padding:9px 12px;border:1px solid var(--border);font-size:13px;font-family:inherit;outline:none">
-      <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><span>— atau —</span></div>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 12px;border:1px dashed var(--green);border-radius:var(--radius);background:var(--green-light);color:var(--green-dark);font-size:13px">
         <i class="ti ti-upload"></i> Upload foto dari laptop
         <input type="file" id="a_foto_file" accept="image/*" style="display:none" onchange="previewFotoArtikel(this)">
@@ -1214,11 +1267,13 @@ function formArtikel(data={}){
 }
  
 function previewFotoArtikel(input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    document.getElementById('a_foto').value='';
-    document.getElementById('a_foto_preview').innerHTML=`<img src="${e.target.result}" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--radius)" data-base64="${e.target.result}">`;
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const fotoEl = document.getElementById('a_foto');
+    if(fotoEl) fotoEl.value = ''; // ← tambah pengecekan
+    const previewEl = document.getElementById('a_foto_preview');
+    if(previewEl) previewEl.innerHTML = `<img src="${e.target.result}" style="width:100%;max-height:140px;object-fit:cover;border-radius:var(--radius)" data-base64="${e.target.result}">`;
   };
   reader.readAsDataURL(file);
 }
@@ -1240,6 +1295,23 @@ function tambahArtikel(){
   ${formArtikel()}
   <div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="simpanArtikel()"><i class="ti ti-check"></i>Publish</button></div>`);
 }
+function editArtikel(id){
+  const a = (DB.get('artikel')||[]).find(x=>x.id==id);
+  if(!a){showToast('Artikel tidak ditemukan','error');return;}
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">Edit Artikel</div>
+      <div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div>
+    </div>
+    ${formArtikel(a)}
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="updateArtikel(${id})">
+        <i class="ti ti-check"></i> Simpan
+      </button>
+    </div>
+  `);
+}
 async function updateArtikel(id){
   const d=getFormArtikel();
   await fetch(`/api/artikel/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
@@ -1247,23 +1319,30 @@ async function updateArtikel(id){
   closeModal();showToast('Artikel diperbarui');renderSection('artikel');
 }
 function getFormArtikel(){
-  // Foto: prioritaskan file upload (base64), lalu URL
-  let foto=document.getElementById('a_foto').value.trim();
-  const imgEl=document.querySelector('#a_foto_preview img[data-base64]');
-  if(imgEl)foto=imgEl.getAttribute('data-base64');
-  const rawVideo=document.getElementById('a_video').value.trim();
-  return{judul:document.getElementById('a_judul').value.trim(),kategori:document.getElementById('a_kat').value,penulis:document.getElementById('a_penulis').value.trim(),tanggal:document.getElementById('a_tgl').value,foto,videoUrl:toYoutubeEmbed(rawVideo),isi:document.getElementById('a_isi').value.trim()};
+  // Ambil foto dari preview (base64 atau URL existing)
+  let foto = '';
+  const imgEl = document.querySelector('#a_foto_preview img');
+  if(imgEl){
+    foto = imgEl.getAttribute('data-base64') || imgEl.src || '';
+  }
+  
+  const rawVideo = document.getElementById('a_video').value.trim();
+  return {
+    judul:    document.getElementById('a_judul').value.trim(),
+    kategori: document.getElementById('a_kat').value,
+    penulis:  document.getElementById('a_penulis').value.trim(),
+    tanggal:  document.getElementById('a_tgl').value,
+    foto,
+    videoUrl: toYoutubeEmbed(rawVideo),
+    isi:      document.getElementById('a_isi').value.trim()
+  };
 }
 function simpanArtikel(){
   const d=getFormArtikel();if(!d.judul||!d.isi){showToast('Judul dan isi wajib diisi','error');return;}
   const art=DB.get('artikel');art.push({...d,id:uid()});DB.set('artikel',art);
   closeModal();showToast('Artikel berhasil dipublish');renderSection('artikel');
 }
-function updateArtikel(id){
-  const d=getFormArtikel();
-  DB.set('artikel',DB.get('artikel').map(a=>a.id===id?{...a,...d}:a));
-  closeModal();showToast('Artikel diperbarui');renderSection('artikel');
-}
+
 async function hapusArtikel(id){
   if(!confirm('Hapus artikel ini?'))return;
   await fetch(`/api/artikel/${id}/delete`,{method:'POST'});
@@ -1306,7 +1385,7 @@ SECTIONS.jadwal = ()=>{
   const posyanduKu=getPosyanduOrtu();
 
   if(isOrtu){
-    jdwl=jdwl.filter(j=>(j.posyandu===posyanduKu)&&j.published===true);
+    jdwl=jdwl.filter(j=>(j.posyandu===posyanduKu)&&j.published==1);
   }
 
   const sorted=[...jdwl].sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
@@ -1349,8 +1428,8 @@ SECTIONS.jadwal = ()=>{
     if(filterVal) tampil=sorted.filter(j=>j.posyandu===filterVal);
   }
 
-  const drafts = canEdit ? tampil.filter(j=>!j.published) : [];
-  const published = canEdit ? tampil.filter(j=>j.published) : tampil;
+    const drafts = canEdit ? tampil.filter(j=>j.published==0||!j.published) : [];
+    const published = canEdit ? tampil.filter(j=>j.published==1) : tampil;
 
   function renderItem(j){
     const d=new Date(j.tanggal),day=d.getDate(),mon=d.toLocaleDateString('id-ID',{month:'short'});
@@ -1396,42 +1475,61 @@ SECTIONS.jadwal = ()=>{
   return reminderBanner + infoBanner + filterBar + draftSection + publishedSection;
 };
 
-function publishJadwal(id) {
-  const jdwl = DB.get('jadwal').map(j => j.id == id  // ← pakai == bukan ===
-    ? { ...j, published: true, publishedAt: new Date().toISOString() }
+async function publishJadwal(id) {
+  const jdwl = DB.get('jadwal').map(j => j.id == id
+    ? { ...j, published: 1, publishedAt: new Date().toISOString() }
     : j
   );
-  DB.set('jadwal', jdwl);
 
-  const j = jdwl.find(x => x.id == id); // ← pakai == bukan ===
-  
-  if (!j) { // ← tambah pengecekan
-    showToast('Jadwal tidak ditemukan');
+  // Simpan ke database
+  try {
+    await fetch(`/api/jadwal/${id}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({published: 1, publishedAt: new Date().toISOString()})
+    });
+  } catch(e) {
+    showToast('Gagal menyimpan ke server', 'error');
     return;
   }
+
+  DB.set('jadwal', jdwl);
+
+  const j = jdwl.find(x => x.id == id);
+  if(!j){ showToast('Jadwal tidak ditemukan'); return; }
 
   showToast(`Jadwal diluncurkan ke posyandu ${j.posyandu || '-'}`);
   renderSection('jadwal');
   updateNotifDot();
 }
-function unpublishJadwal(id){
-  DB.set('jadwal',DB.get('jadwal').map(j=>j.id===id?{...j,published:false}:j));
+async function unpublishJadwal(id){
+  try {
+    await fetch(`/api/jadwal/${id}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({published: 0})
+    });
+  } catch(e) {
+    showToast('Gagal menyimpan ke server', 'error');
+    return;
+  }
+  DB.set('jadwal', DB.get('jadwal').map(j=>j.id==id?{...j,published:0}:j));
   showToast('Jadwal ditarik ke draft');
   renderSection('jadwal');
   updateNotifDot();
 }
 
 function updateNotifDot(){
-  const posyanduKu=getPosyanduOrtu();
-  const jdwl=DB.get('jadwal')||[];
-  let ada=false;
+  const posyanduKu = getPosyanduOrtu();
+  const jdwl = DB.get('jadwal')||[];
+  let ada = false;
   if(currentUser.role==='ortu'){
-    ada=jdwl.some(j=>j.posyandu===posyanduKu&&j.published&&hariMenuju(j.tanggal)>=0&&hariMenuju(j.tanggal)<=7);
+    ada = jdwl.some(j=>j.posyandu===posyanduKu&&j.published==1&&hariMenuju(j.tanggal)>=0&&hariMenuju(j.tanggal)<=7); // ← ==1
   } else {
-    ada=jdwl.some(j=>!j.published);
+    ada = jdwl.some(j=>j.published==0||!j.published); // ← ==0
   }
-  const dot=document.querySelector('.notif-dot');
-  if(dot) dot.style.display=ada?'block':'none';
+  const dot = document.querySelector('.notif-dot');
+  if(dot) dot.style.display = ada?'block':'none';
 }
 
 function formJadwal(data={}){
@@ -1481,7 +1579,7 @@ async function hapusJadwal(id){
 // ──────────────────────────────────────
 SECTIONS.laporan = ()=>{
   const anak=DB.get('anak')||[];const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const statuses=Object.values(latest).map(u=>u.status);
   const total=anak.length,stunt=statuses.filter(s=>s==='Stunting'||s==='Stunting Berat').length;
   const pantau=statuses.filter(s=>s==='Perlu Pantau').length,normal=statuses.filter(s=>s==='Normal').length;
@@ -1789,9 +1887,9 @@ SECTIONS.home_ortu = ()=>{
   const nikOrtu = currentUser.nik || currentUser.username;
 const a = anak.find(x => (x.nikIbu || x.nik_ibu) === nikOrtu);
 if(!a) return `<div class="empty"><i class="ti ti-baby"></i><p>Belum ada data anak terdaftar untuk akun Anda.</p></div>`;
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===a.id).sort((x,y)=>y.tanggal.localeCompare(x.tanggal));
+  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)==a.id).sort((x,y)=>y.tanggal.localeCompare(x.tanggal));
   const last=ukur[0];
-  const jadwal=(DB.get('jadwal')||[]).filter(j=>j.published===true&&j.posyandu===a.posyandu&&hariMenuju(j.tanggal)>=0).sort((x,y)=>x.tanggal.localeCompare(y.tanggal)).slice(0,2);
+  const jadwal=(DB.get('jadwal')||[]).filter(j=>j.published==1&&j.posyandu===a.posyandu&&hariMenuju(j.tanggal)>=0).sort((x,y)=>x.tanggal.localeCompare(y.tanggal)).slice(0,2);
   const jItems=jadwal.length?jadwal.map(j=>{const d=new Date(j.tanggal),day=d.getDate(),mon=d.toLocaleDateString('id-ID',{month:'short'});return`<div class="jadwal-item"><div class="jadwal-date-box">${day}<br>${mon}</div><div><div class="jadwal-info-title">${j.judul}</div><div class="jadwal-info-meta">${j.waktu} · ${j.posyandu}</div></div></div>`;}).join(''):`<div class="empty" style="padding:16px"><i class="ti ti-calendar-x"></i><p style="font-size:12px">Belum ada jadwal dari posyandu Anda.</p></div>`;
   return `
   <div class="anak-profile-banner">
@@ -1822,7 +1920,7 @@ SECTIONS.perkembangan = ()=>{
   const nikOrtu = currentUser.nik || currentUser.username;
 const a = anak.find(x => (x.nikIbu || x.nik_ibu) === nikOrtu);
   if(!a)return`<div class="empty"><i class="ti ti-baby"></i><p>Data tidak ditemukan.</p></div>`;
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===a.id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
+  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)==a.id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
   const rows=ukur.map(u=>`<tr><td>${fmtDate(u.tanggal)}</td><td>${u.bb} kg</td><td>${u.tb} cm</td><td>${u.lk||'-'}</td><td>${u.lla||'-'}</td><td>${u.zscore_tbu}</td><td>${statusBadge(u.status)}</td><td>${u.catatan||'-'}</td></tr>`).join('');
   return `
   <div class="card mb-16"><div class="card-title"><i class="ti ti-trending-up"></i>Riwayat Perkembangan — ${a.nama}</div>
@@ -1835,9 +1933,78 @@ const a = anak.find(x => (x.nikIbu || x.nik_ibu) === nikOrtu);
 // PROFIL PENGGUNA
 // ──────────────────────────────────────
 SECTIONS.profil = ()=>{
-  const u=currentUser;
-  const avatarSrc=u.fotoProfil?`<img src="${u.fotoProfil}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--green)">`:`<div style="width:60px;height:60px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:700;flex-shrink:0">${u.nama.charAt(0).toUpperCase()}</div>`;
-  const avatarBig=u.fotoProfil?`<img id="profilAvatarBig" src="${u.fotoProfil}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--green)">`:`<div id="profilAvatarBig" style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;font-weight:700">${u.nama.charAt(0).toUpperCase()}</div>`;
+  const u = currentUser;
+  const isOrtu = u.role === 'ortu';
+  const nikOrtu = u.nik || u.username;
+  const a = isOrtu ? (DB.get('anak')||[]).find(x=>(x.nikIbu||x.nik_ibu)===nikOrtu) : null;
+
+  const avatarSrc = u.fotoProfil
+    ? `<img src="${u.fotoProfil}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--green)">`
+    : `<div style="width:60px;height:60px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:700;flex-shrink:0">${u.nama.charAt(0).toUpperCase()}</div>`;
+
+  const avatarBig = u.fotoProfil
+    ? `<img id="profilAvatarBig" src="${u.fotoProfil}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--green)">`
+    : `<div id="profilAvatarBig" style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;font-weight:700">${u.nama.charAt(0).toUpperCase()}</div>`;
+
+  // Profil khusus ortu
+  if(isOrtu) return `
+  <div style="max-width:640px;margin:0 auto">
+    <div class="card mb-16">
+      <div class="card-title"><i class="ti ti-user-circle"></i> Profil Saya</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+        ${avatarBig}
+        <div>
+          <div style="font-size:17px;font-weight:600">${u.nama}</div>
+          <div class="text-muted text-sm">Orang Tua / Wali</div>
+          <span class="badge badge-gray" style="margin-top:4px">NIK: ${u.nik||u.username||'-'}</span>
+        </div>
+      </div>
+      <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;color:var(--text2);background:var(--bg)">
+        <i class="ti ti-camera"></i> Ubah Foto Profil
+        <input type="file" accept="image/*" style="display:none" onchange="uploadFotoProfil(this)">
+      </label>
+      ${u.fotoProfil?`<button class="btn btn-sm btn-danger" style="margin-left:8px" onclick="hapusFotoProfil()"><i class="ti ti-trash"></i> Hapus Foto</button>`:''}
+    </div>
+
+    ${a ? `
+    <div class="card mb-16">
+      <div class="card-title"><i class="ti ti-users"></i> Data Keluarga</div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Data Ibu</div>
+      <div class="form-group mb-12"><label>Nama Ibu</label><input id="or_namaIbu" value="${a.namaIbu||a.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
+      <div class="form-group mb-12"><label>NIK Ibu</label><input id="or_nikIbu" value="${a.nikIbu||a.nik_ibu||''}" placeholder="NIK ibu"></div>
+      <div class="form-group mb-12"><label>Pekerjaan Ibu</label><input id="or_pekerjaanIbu" value="${a.pekerjaanIbu||a.pekerjaan_ibu||''}" placeholder="Contoh: Ibu Rumah Tangga"></div>
+      <div class="form-group mb-12"><label>No. HP</label><input id="or_hp" value="${a.noHP||a.no_hp||''}" placeholder="08xxx"></div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin:16px 0 10px;text-transform:uppercase;letter-spacing:.05em">Data Ayah</div>
+      <div class="form-group mb-12"><label>Nama Ayah</label><input id="or_namaAyah" value="${a.namaAyah||a.nama_ayah||''}" placeholder="Nama ayah"></div>
+      <div class="form-group mb-12"><label>Pekerjaan Ayah</label><input id="or_pekerjaanAyah" value="${a.pekerjaanAyah||a.pekerjaan_ayah||''}" placeholder="Contoh: Wiraswasta"></div>
+
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin:16px 0 10px;text-transform:uppercase;letter-spacing:.05em">Alamat</div>
+      <div class="form-group mb-12"><label>Alamat</label><input id="or_alamat" value="${a.alamat||''}" placeholder="Alamat lengkap"></div>
+    </div>
+
+    <div class="card mb-16">
+      <div class="card-title"><i class="ti ti-baby"></i> Data Anak</div>
+      <div class="form-group mb-12"><label>Nama Anak</label><input id="or_namaAnak" value="${a.nama||''}" placeholder="Nama lengkap anak"></div>
+      <div class="form-group mb-12"><label>NIK Anak</label><input id="or_nikAnak" value="${a.nik||''}" placeholder="16 digit NIK"></div>
+      <div class="form-group mb-12"><label>Tanggal Lahir</label><input type="date" id="or_tglLahir" value="${a.tglLahir||a.tgl_lahir||''}"></div>
+      <div class="form-group mb-12"><label>Jenis Kelamin</label>
+        <select id="or_jk">
+          <option value="L" ${(a.jenisKelamin||a.jenis_kelamin)==='L'?'selected':''}>Laki-laki</option>
+          <option value="P" ${(a.jenisKelamin||a.jenis_kelamin)==='P'?'selected':''}>Perempuan</option>
+        </select>
+      </div>
+      <div class="info-row"><div class="info-label">Posyandu</div><div class="info-val">${a.posyandu||'-'}</div></div>
+
+      <button class="btn btn-primary w-full mt-12" onclick="simpanProfilOrtu(${a.id})" style="justify-content:center">
+        <i class="ti ti-check"></i> Simpan Semua Perubahan
+      </button>
+    </div>`
+    : `<div class="card"><div class="empty" style="padding:24px"><i class="ti ti-baby"></i><p>Belum ada data anak terdaftar.</p></div></div>`}
+  </div>`;
+
+  // Profil untuk admin & bidan
   return `
   <div class="grid-2">
     <div class="card">
@@ -1847,9 +2014,9 @@ SECTIONS.profil = ()=>{
         <div><div style="font-size:17px;font-weight:600">${u.nama}</div><div class="text-muted text-sm">${ROLE_LABELS[u.role]||u.role}</div></div>
       </div>
       <div class="info-row"><div class="info-label">Identitas Login</div><div class="info-val">
-        ${u.role==='ortu'?`<span class="badge badge-gray">NIK: ${u.nik||'-'}</span>`:u.role==='bidan'?`<span class="badge badge-green">NIP: ${u.nip||'-'}</span>`:`<span class="badge badge-blue">Username: ${u.username||'-'}</span>`}
+        ${u.role==='bidan'?`<span class="badge badge-green">NIP: ${u.nip||'-'}</span>`:`<span class="badge badge-blue">Username: ${u.username||'-'}</span>`}
       </div></div>
-      <div class="info-row"><div class="info-label">Metode Login</div><div class="info-val text-muted" style="font-size:12px">${u.role==='ortu'?'NIK saja (tanpa password)':u.role==='bidan'?'NIP saja (tanpa password)':'Username + Password'}</div></div>
+      <div class="info-row"><div class="info-label">Metode Login</div><div class="info-val text-muted" style="font-size:12px">${u.role==='bidan'?'NIP saja (tanpa password)':'Username + Password'}</div></div>
     </div>
     <div class="card">
       <div class="card-title"><i class="ti ti-edit"></i>Edit Profil</div>
@@ -1869,6 +2036,251 @@ SECTIONS.profil = ()=>{
   </div>`;
 };
  
+// ═══════════════════════════════════════
+// SARAN & MASUKAN
+// ═══════════════════════════════════════
+
+SECTIONS.saran = ()=>{
+  const posyanduKu = getPosyanduOrtu();
+  const riwayat = (DB.get('saran')||[])
+    .filter(s=>s.pengguna_id==currentUser.id)
+    .sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+
+  return `
+  <div style="max-width:600px;margin:0 auto">
+    <!-- Form Kirim Saran -->
+    <div class="card mb-16">
+      <div class="card-title"><i class="ti ti-message-circle"></i> Kirim Saran & Masukan</div>
+      <div class="alert alert-info" style="margin-bottom:16px;font-size:12px">
+        <i class="ti ti-building-community"></i> Saran untuk posyandu: <b>${posyanduKu||'—'}</b>
+      </div>
+      <div class="form-group">
+        <label>Rating Pelayanan</label>
+        <div id="starRating" style="display:flex;gap:8px;font-size:32px;cursor:pointer;margin-top:4px">
+          ${[1,2,3,4,5].map(i=>`<span onclick="setRating(${i})" id="star_${i}" style="color:#ddd;transition:.2s">★</span>`).join('')}
+        </div>
+        <input type="hidden" id="ratingVal" value="0">
+      </div>
+      <div class="form-group">
+        <label>Pesan Saran / Masukan</label>
+        <textarea id="pesanSaran" rows="4"
+          placeholder="Tuliskan saran atau masukan Anda tentang pelayanan posyandu..."
+          style="width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="kirimSaran()" style="width:100%;justify-content:center;padding:13px">
+        <i class="ti ti-send"></i> Kirim Saran
+      </button>
+    </div>
+
+    <!-- Riwayat Saran -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-history"></i> Riwayat Saran Saya</div>
+      ${riwayat.length ? riwayat.map(s=>`
+        <div style="padding:14px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;background:var(--bg)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="color:#f59e0b;font-size:18px">${'★'.repeat(s.rating||0)}${'☆'.repeat(5-(s.rating||0))}</div>
+            <div style="font-size:11px;color:var(--text3)">${fmtDate(s.created_at)}</div>
+          </div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6">${s.pesan}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px"><i class="ti ti-building-community" style="font-size:11px"></i> ${s.posyandu||'-'}</div>
+        </div>`).join('')
+      : `<div class="empty" style="padding:24px">
+          <i class="ti ti-message-off"></i>
+          <p>Belum ada saran yang dikirim.</p>
+        </div>`}
+    </div>
+  </div>`;
+};
+SECTIONS.saran_admin = ()=>{
+  const semua = DB.get('saran')||[];
+  const filterPos = window._saranPosFilter||'semua';
+  const filterBintang = window._saranBintangFilter||0;
+
+  const allPos = [...new Set(semua.map(s=>s.posyandu).filter(Boolean))];
+
+  let filtered = semua;
+  if(filterPos!=='semua') filtered = filtered.filter(s=>s.posyandu===filterPos);
+  if(filterBintang>0) filtered = filtered.filter(s=>s.rating==filterBintang);
+
+  const avgRating = filtered.length?(filtered.reduce((a,b)=>a+(b.rating||0),0)/filtered.length).toFixed(1):0;
+
+  const rows = filtered.map(s=>`
+    <tr>
+      <td>${s.nama_ortu||'-'}</td>
+      <td>${s.posyandu||'-'}</td>
+      <td style="max-width:250px">${s.pesan}</td>
+      <td style="color:#f59e0b">${'★'.repeat(s.rating||0)}${'☆'.repeat(5-(s.rating||0))}</td>
+      <td>${fmtDate(s.created_at)}</td>
+    </tr>`).join('')||'<tr><td colspan=5 style="text-align:center;color:var(--text2);padding:24px">Belum ada saran masuk</td></tr>';
+
+  return `
+  <!-- Statistik -->
+  <div class="grid-3 mb-20">
+    <div class="metric">
+      <div class="metric-label"><i class="ti ti-message-circle"></i> Total Saran</div>
+      <div class="metric-val">${semua.length}</div>
+      <div class="metric-sub">Semua posyandu</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label"><i class="ti ti-filter"></i> Hasil Filter</div>
+      <div class="metric-val">${filtered.length}</div>
+      <div class="metric-sub">${filterPos==='semua'?'Semua posyandu':filterPos}</div>
+    </div>
+    <div class="metric" style="border-top:3px solid #f59e0b">
+      <div class="metric-label"><i class="ti ti-star" style="color:#f59e0b"></i> Rata-rata Rating</div>
+      <div class="metric-val" style="color:#f59e0b">${avgRating}</div>
+      <div class="metric-sub">${'★'.repeat(Math.round(avgRating))}${'☆'.repeat(5-Math.round(avgRating))}</div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div style="display:flex;gap:12px;margin-top:20px;margin-bottom:20px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      
+      <!-- Dropdown Posyandu -->
+      <select onchange="window._saranPosFilter=this.value;renderSection('saran_admin')"
+        style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none">
+        <option value="semua" ${filterPos==='semua'?'selected':''}>— Semua Posyandu —</option>
+        ${allPos.map(p=>`<option value="${p}" ${filterPos===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+
+      <!-- Filter Bintang -->
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:12px;color:var(--text2)">Rating:</span>
+        <button class="btn btn-sm ${filterBintang===0?'btn-primary':''}"
+          onclick="window._saranBintangFilter=0;renderSection('saran_admin')">Semua</button>
+        ${[1,2,3,4,5].map(b=>`
+          <button class="btn btn-sm ${filterBintang===b?'btn-primary':''}"
+            onclick="window._saranBintangFilter=${b};renderSection('saran_admin')"
+            style="color:#f59e0b;${filterBintang===b?'background:var(--green);color:#fff;':''}">
+            ${'★'.repeat(b)}
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <!-- Tombol Download PDF -->
+    <button class="btn btn-primary" onclick="downloadSaranPDF('${filterPos}',${filterBintang})">
+      <i class="ti ti-file-download"></i> Download PDF
+    </button>
+  </div>
+
+  <!-- Tabel -->
+  <div class="card">
+    <div class="card-title">
+      <i class="ti ti-message-circle"></i> Daftar Saran & Masukan
+      ${filterPos!=='semua'?`<span class="badge badge-green" style="margin-left:8px">${filterPos}</span>`:''}
+      ${filterBintang>0?`<span class="badge badge-amber" style="margin-left:4px">${'★'.repeat(filterBintang)}</span>`:''}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nama</th><th>Posyandu</th><th>Pesan</th><th>Rating</th><th>Tanggal</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+};
+
+function downloadSaranPDF(filterPos, filterBintang){
+  const semua = DB.get('saran')||[];
+  let filtered = semua;
+  if(filterPos!=='semua') filtered = filtered.filter(s=>s.posyandu===filterPos);
+  if(filterBintang>0) filtered = filtered.filter(s=>s.rating==filterBintang);
+
+  const avgRating = filtered.length?(filtered.reduce((a,b)=>a+(b.rating||0),0)/filtered.length).toFixed(1):0;
+  const tanggal = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+
+  const rows = filtered.map(s=>`
+    <tr>
+      <td>${s.nama_ortu||'-'}</td>
+      <td>${s.posyandu||'-'}</td>
+      <td>${s.pesan}</td>
+      <td style="color:#d97706">${'★'.repeat(s.rating||0)}${'☆'.repeat(5-(s.rating||0))}</td>
+      <td>${fmtDate(s.created_at)}</td>
+    </tr>`).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Laporan Saran & Masukan</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:24px;font-size:12px;color:#222}
+    h1{font-size:18px;margin-bottom:2px;color:#16a37f}
+    h2{font-size:13px;color:#555;font-weight:normal;margin-bottom:16px}
+    .meta{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f4f7f5;border-radius:6px}
+    .meta-item .label{font-size:11px;color:#666}
+    .meta-item .val{font-size:20px;font-weight:700;color:#16a37f}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th{background:#16a37f;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+    td{padding:7px 10px;border-bottom:1px solid #e2e8f0;font-size:11px;vertical-align:top}
+    tr:last-child td{border-bottom:none}
+    .filter-info{font-size:11px;color:#555;margin-bottom:12px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;background:#fafafa}
+    @media print{button{display:none}}
+  </style></head><body>
+  <h1>Laporan Saran & Masukan Posyandu</h1>
+  <h2>Puskesmas Sungai Durian — Dicetak: ${tanggal}</h2>
+  <div class="filter-info">
+    Filter: Posyandu = <b>${filterPos==='semua'?'Semua Posyandu':filterPos}</b> &nbsp;|&nbsp;
+    Rating = <b>${filterBintang===0?'Semua':('★').repeat(filterBintang)}</b> &nbsp;|&nbsp;
+    Total Data = <b>${filtered.length}</b> &nbsp;|&nbsp;
+    Rata-rata Rating = <b>${avgRating} ★</b>
+  </div>
+  <div class="meta">
+    <div class="meta-item"><div class="label">Total Saran</div><div class="val">${semua.length}</div></div>
+    <div class="meta-item"><div class="label">Hasil Filter</div><div class="val">${filtered.length}</div></div>
+    <div class="meta-item"><div class="label">Rata-rata Rating</div><div class="val" style="color:#d97706">${avgRating} ★</div></div>
+  </div>
+  <button onclick="window.print()" style="padding:8px 16px;background:#16a37f;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-bottom:12px">🖨️ Cetak / Simpan PDF</button>
+  <table>
+    <thead><tr><th>Nama</th><th>Posyandu</th><th>Pesan</th><th>Rating</th><th>Tanggal</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan=5 style="text-align:center;color:#999">Tidak ada data</td></tr>'}</tbody>
+  </table>
+  </body></html>`);
+  win.document.close();
+}
+
+function setRating(val){
+  document.getElementById('ratingVal').value = val;
+  for(let i=1;i<=5;i++){
+    document.getElementById('star_'+i).style.color = i<=val?'#f59e0b':'#ddd';
+  }
+}
+
+
+
+async function kirimSaran(){
+  const pesan = document.getElementById('pesanSaran').value.trim();
+  const rating = parseInt(document.getElementById('ratingVal').value);
+  if(!pesan){showToast('Tulis pesan terlebih dahulu','error');return;}
+  if(!rating){showToast('Berikan rating terlebih dahulu','error');return;}
+
+  const hasil = analisisSentimen(pesan, rating);
+  const posyanduKu = getPosyanduOrtu();
+
+  try {
+    const res = await fetch('/api/saran',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        pengguna_id: currentUser.id,
+        nama_ortu: currentUser.nama,
+        posyandu: posyanduKu, // ← tambah ini
+        pesan, rating,
+        skor_sentimen: hasil.skor
+      })
+    });
+    const result = await res.json();
+    if(!result.success){showToast('Gagal mengirim saran','error');return;}
+
+    const saran = DB.get('saran')||[];
+    saran.push(result.data);
+    DB.state.saran = saran;
+
+    showToast('Saran berhasil dikirim, terima kasih!','success');
+    renderSection('saran');
+  } catch(e){
+    showToast('Gagal mengirim saran','error');
+  }
+}
+
 function uploadFotoProfil(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -1884,6 +2296,42 @@ function uploadFotoProfil(input){
     renderSection('profil');
   };
   reader.readAsDataURL(file);
+}
+
+async function simpanProfilOrtu(idAnak){
+  const d = {
+    namaIbu:       document.getElementById('or_namaIbu').value.trim(),
+    nikIbu:        document.getElementById('or_nikIbu').value.trim(),
+    pekerjaanIbu:  document.getElementById('or_pekerjaanIbu').value.trim(),
+    noHP:          document.getElementById('or_hp').value.trim(),
+    namaAyah:      document.getElementById('or_namaAyah').value.trim(),
+    pekerjaanAyah: document.getElementById('or_pekerjaanAyah').value.trim(),
+    alamat:        document.getElementById('or_alamat').value.trim(),
+    nama:          document.getElementById('or_namaAnak').value.trim(),
+    nik:           document.getElementById('or_nikAnak').value.trim(),
+    tglLahir:      document.getElementById('or_tglLahir').value,
+    jenisKelamin:  document.getElementById('or_jk').value,
+  };
+
+  if(!d.nama){showToast('Nama anak wajib diisi','error');return;}
+
+  try {
+    await fetch(`/api/balita/${idAnak}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(d)
+    });
+  } catch(e){
+    showToast('Gagal menyimpan ke server','error');
+    return;
+  }
+
+  DB.set('anak', (DB.get('anak')||[]).map(a=>
+    a.id==idAnak ? {...a, ...d} : a
+  ));
+
+  showToast('Profil berhasil diperbarui','success');
+  renderSection('profil');
 }
  
 function hapusFotoProfil(){
@@ -1943,9 +2391,9 @@ function buatGrafikSVG(ukurList, field, label, color, unit){
 SECTIONS.perkembangan = ()=>{
   const anak=DB.get('anak')||[];
  const nikOrtu = currentUser.nik || currentUser.username;
-const a = anak.find(x => x.nikIbu === nikOrtu);
+const a = anak.find(x => (x.nikIbu || x.nik_ibu) === nikOrtu);
   if(!a)return`<div class="empty"><i class="ti ti-baby"></i><p>Data tidak ditemukan.</p></div>`;
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===a.id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
+  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)==a.id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
   const rows=ukur.map(u=>`<tr><td>${fmtDate(u.tanggal)}</td><td>${u.bb} kg</td><td>${u.tb} cm</td><td>${u.lk||'-'}</td><td>${u.lla||'-'}</td><td>${u.zscore_tbu}</td><td>${statusBadge(u.status)}</td><td>${u.catatan||'-'}</td></tr>`).join('');
   return `
   <div class="grid-2 mb-16">
@@ -1963,7 +2411,7 @@ const a = anak.find(x => x.nikIbu === nikOrtu);
 // ──────────────────────────────────────
 function grafikAnak(id){
   const a=DB.get('anak').find(x=>x.id===id);
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
+  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)===id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
   openModal(`<div class="modal-header"><div class="modal-title"><i class="ti ti-chart-line" style="color:var(--green)"></i> Grafik — ${a.nama}</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>
   <div class="mb-12"><div class="card-title" style="margin-bottom:8px"><i class="ti ti-trending-up"></i>Berat Badan (kg)</div>${buatGrafikSVG(ukur,'bb','Berat Badan','#16a37f','kg')}</div>
   <div class="mb-12"><div class="card-title" style="margin-bottom:8px"><i class="ti ti-trending-up"></i>Tinggi Badan (cm)</div>${buatGrafikSVG(ukur,'tb','Tinggi Badan','#2563eb','cm')}</div>
@@ -1977,7 +2425,7 @@ function grafikAnak(id){
 function unduhLaporan(){
   const anak=DB.get('anak')||[];
   const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const header='Nama Anak,JK,Usia (bln),Wilayah,Posyandu,BB (kg),TB (cm),Z TB/U,Status,Tgl Ukur';
   const rows=anak.map(a=>{const u=latest[a.id];return[a.nama,a.jenisKelamin,hitungUsia(a.tglLahir || a.tgl_lahir),a.wilayah,a.posyandu,u?u.bb:'',u?u.tb:'',u?u.zscore_tbu:'',u?u.status:'',u?u.tanggal:''].join(',');});
   const csv=[header,...rows].join('\n');
@@ -1993,7 +2441,7 @@ function unduhLaporan(){
 function printLaporan(){
   const anak=DB.get('anak')||[];
   const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[u.idAnak])latest[u.idAnak]=u;});
+  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const tanggal=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
   const rows=anak.map(a=>{const u=latest[a.id];return`<tr><td>${a.nama}</td><td>${a.jenisKelamin==='L'?'L':'P'}</td><td>${hitungUsia(a.tglLahir || a.tgl_lahir)} bln</td><td>${a.wilayah}</td><td>${u?u.bb+' kg':'-'}</td><td>${u?u.tb+' cm':'-'}</td><td>${u?u.zscore_tbu:'-'}</td><td>${u?u.status:'-'}</td></tr>`;}).join('');
   const stunt=Object.values(latest).filter(u=>u.status==='Stunting'||u.status==='Stunting Berat').length;
@@ -2029,7 +2477,7 @@ SECTIONS.laporan = ()=>{
 const _oldDetailAnak = detailAnak;
 function detailAnak(id){
   const a=DB.get('anak').find(x=>x.id===id);
-  const ukur=DB.get('pengukuran').filter(u=>u.idAnak===id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)===id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
   const last=ukur[0];
   openModal(`<div class="modal-header"><div class="modal-title">Profil — ${a.nama}</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>
   <div class="info-row"><div class="info-label">NIK</div><div class="info-val">${fmt(a.nik)}</div></div>

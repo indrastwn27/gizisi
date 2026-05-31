@@ -10,6 +10,7 @@ use App\Models\Posyandu;
 use App\Models\Artikel;
 use App\Models\Jadwal;
 use App\Models\Notifikasi;
+use App\Models\Saran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
@@ -51,11 +52,11 @@ class SigiziController extends Controller {
             $anak       = Balita::all();
             $pengukuran = Pengukuran::all();
             $notifikasi = Notifikasi::all(); 
-
-            return view('sigizi', compact('anak', 'pengukuran', 'users', 'wilayah', 'posyandu', 'artikel', 'jadwal', 'notifikasi'));
+            $saran      = Saran::all();
+            
+            return view('sigizi', compact('anak', 'pengukuran', 'users', 'wilayah', 'posyandu', 'artikel', 'jadwal', 'notifikasi', 'saran'));
 
         } catch (Exception $e) {
-            // Jika koneksi MySQL bermasalah, paksa tampilkan pesan error aslinya ke layar browser
             dd("Laravel gagal terhubung ke phpMyAdmin! Alasan error: " . $e->getMessage());
         }
     }
@@ -65,29 +66,16 @@ class SigiziController extends Controller {
     public function storeBalita(Request $request) {
         try {
             $data = $request->all(); 
-            unset($data['id']); // Hapus ID agar tidak bentrok dengan AUTO_INCREMENT
+            unset($data['id']);
 
-            // Konversi camelCase ke snake_case dan hapus key lamanya agar tidak dikirim ke MySQL
-            if (isset($data['tglLahir'])) { 
-                $data['tgl_lahir'] = $data['tglLahir']; 
-                unset($data['tglLahir']);
-            }
-            if (isset($data['jenisKelamin'])) { 
-                $data['jenis_kelamin'] = $data['jenisKelamin']; 
-                unset($data['jenisKelamin']);
-            }
-            if (isset($data['namaIbu'])) { 
-                $data['nama_ibu'] = $data['namaIbu']; 
-                unset($data['namaIbu']);
-            }
-            if (isset($data['nikIbu'])) { 
-                $data['nik_ibu'] = $data['nikIbu']; 
-                unset($data['nikIbu']);
-            }
-            if (isset($data['noHP'])) { 
-                $data['no_hp'] = $data['noHP']; 
-                unset($data['noHP']);
-            }
+            if (isset($data['tglLahir']))     { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
+            if (isset($data['jenisKelamin'])) { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
+            if (isset($data['namaIbu']))      { $data['nama_ibu']       = $data['namaIbu'];       unset($data['namaIbu']); }
+            if (isset($data['nikIbu']))       { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
+            if (isset($data['noHP']))         { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
+            if (isset($data['namaAyah']))     { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
+            if (isset($data['pekerjaanIbu'])) { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
+            if (isset($data['pekerjaanAyah'])){ $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
             
             $res = Balita::create($data); 
             return response()->json(['success' => true, 'data' => $res]);
@@ -101,11 +89,9 @@ class SigiziController extends Controller {
             $data = $request->all(); 
             unset($data['id']);
 
-            // Tentukan id_anak dari berbagai kemungkinan request frontend
             $idAnak = $data['idAnak'] ?? $data['id_anak'] ?? $data['balita_id'] ?? 1;
             $data['id_anak'] = $idAnak; 
             
-            // Bersihkan sisa-sisa key lama agar tidak menyebabkan error "Column not found"
             unset($data['idAnak'], $data['balita_id']);
             
             $res = Pengukuran::create($data); 
@@ -114,7 +100,6 @@ class SigiziController extends Controller {
             return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Pengukuran.', 'error' => $e->getMessage()], 500);
         }
     }
-
 
     public function storeWilayah(Request $request) { 
         try {
@@ -139,21 +124,30 @@ class SigiziController extends Controller {
     }
     
     public function storePengguna(Request $request) { 
-    try {
-        $data = $request->all(); 
-        unset($data['id']);
-        unset($data['idAnak']); // ← tambah ini
-        $res = Pengguna::create($data); 
-        return response()->json(['success' => true, 'data' => $res]); 
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Pengguna.', 'error' => $e->getMessage()], 500);
+        try {
+            $data = $request->all(); 
+            unset($data['id'], $data['idAnak']);
+            $res = Pengguna::create($data); 
+            return response()->json(['success' => true, 'data' => $res]); 
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Pengguna.', 'error' => $e->getMessage()], 500);
+        }
     }
-}
     
     public function storeArtikel(Request $request) { 
         try {
             $data = $request->all(); 
-            unset($data['id']); 
+            unset($data['id']);
+            
+            if (isset($data['foto']) && str_starts_with($data['foto'], 'data:image')) {
+                $image = $data['foto'];
+                $ext = explode('/', explode(':', substr($image, 0, strpos($image, ';')))[1])[1];
+                $filename = 'artikel_' . time() . '.' . $ext;
+                $imageData = base64_decode(explode(',', $image)[1]);
+                file_put_contents(public_path('images/artikel/' . $filename), $imageData);
+                $data['foto'] = 'images/artikel/' . $filename;
+            }
+            
             $res = Artikel::create($data); 
             return response()->json(['success' => true, 'data' => $res]); 
         } catch (Exception $e) {
@@ -188,145 +182,185 @@ class SigiziController extends Controller {
             return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Notifikasi.', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function storeSaran(Request $request) {
+        try {
+            $data = $request->all();
+            unset($data['id']);
+            $res = Saran::create($data);
+            return response()->json(['success' => true, 'data' => $res]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // --- UPDATE METHODS ---
+
+    public function updateBalita(Request $request, $id) {
+        try {
+            $data = $request->all();
+            unset($data['id']);
+            
+            // Konversi camelCase dari frontend ke snake_case database
+            if (isset($data['tglLahir']))      { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
+            if (isset($data['jenisKelamin']))  { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
+            if (isset($data['namaIbu']))       { $data['nama_ibu']       = $data['namaIbu'];       unset($data['namaIbu']); }
+            if (isset($data['nikIbu']))        { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
+            if (isset($data['noHP']))          { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
+            if (isset($data['namaAyah']))      { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
+            if (isset($data['pekerjaanIbu']))  { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
+            if (isset($data['pekerjaanAyah'])) { $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
+            
+            Balita::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePengukuran(Request $request, $id) {
+        try {
+            $data = $request->all(); 
+            unset($data['id']);
+            if (isset($data['idAnak'])) { $data['id_anak'] = $data['idAnak']; unset($data['idAnak']); }
+            Pengukuran::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateWilayah(Request $request, $id) {
+        try {
+            $data = $request->all(); unset($data['id']);
+            Wilayah::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePosyandu(Request $request, $id) {
+        try {
+            $data = $request->all(); unset($data['id']);
+            Posyandu::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePengguna(Request $request, $id) {
+        try {
+            $data = $request->all(); unset($data['id']);
+            Pengguna::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateArtikel(Request $request, $id) {
+        try {
+            $data = $request->all();
+            unset($data['id']);
+
+            if (isset($data['foto']) && str_starts_with($data['foto'], 'data:image')) {
+                $image = $data['foto'];
+                $ext = explode('/', explode(':', substr($image, 0, strpos($image, ';')))[1])[1];
+                $filename = 'artikel_' . time() . '.' . $ext;
+                $imageData = base64_decode(explode(',', $image)[1]);
+                
+                $artikel = Artikel::findOrFail($id);
+                if($artikel->foto && file_exists(public_path($artikel->foto))){
+                    unlink(public_path($artikel->foto));
+                }
+                
+                file_put_contents(public_path('images/artikel/' . $filename), $imageData);
+                $data['foto'] = 'images/artikel/' . $filename;
+            }
+
+            $artikel = Artikel::findOrFail($id);
+            $artikel->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateJadwal(Request $request, $id) {
+        try {
+            $data = $request->all();
+            unset($data['id'], $data['publishedAt']); 
+            Jadwal::findOrFail($id)->update($data);
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // --- DESTROY METHODS ---
+
     public function destroyPengguna($id){
-    \App\Models\Pengguna::findOrFail($id)->delete();
-    return response()->json(['message' => 'Pengguna dihapus']);
-    
-}
-// --- UPDATE METHODS ---
-
-public function updateBalita(Request $request, $id) {
-    try {
-        $data = $request->all();
-        unset($data['id']);
-        if (isset($data['tglLahir']))     { $data['tgl_lahir']     = $data['tglLahir'];     unset($data['tglLahir']); }
-        if (isset($data['jenisKelamin'])) { $data['jenis_kelamin'] = $data['jenisKelamin']; unset($data['jenisKelamin']); }
-        if (isset($data['namaIbu']))      { $data['nama_ibu']      = $data['namaIbu'];      unset($data['namaIbu']); }
-        if (isset($data['nikIbu']))       { $data['nik_ibu']       = $data['nikIbu'];       unset($data['nikIbu']); }
-        if (isset($data['noHP']))         { $data['no_hp']         = $data['noHP'];         unset($data['noHP']); }
-        Balita::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        try {
+            Pengguna::findOrFail($id)->delete();
+            return response()->json(['success' => true, 'message' => 'Pengguna dihapus']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function updatePengukuran(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        if (isset($data['idAnak'])) { $data['id_anak'] = $data['idAnak']; unset($data['idAnak']); }
-        Pengukuran::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyBalita($id) {
+        try {
+            Balita::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function updateWilayah(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        Wilayah::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyPengukuran($id) {
+        try {
+            Pengukuran::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function updatePosyandu(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        Posyandu::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyWilayah($id) {
+        try {
+            Wilayah::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function updatePengguna(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        Pengguna::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyPosyandu($id) {
+        try {
+            Posyandu::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-
-public function updateArtikel(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        Artikel::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyArtikel($id) {
+        try {
+            Artikel::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function updateJadwal(Request $request, $id) {
-    try {
-        $data = $request->all(); unset($data['id']);
-        Jadwal::findOrFail($id)->update($data);
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    public function destroyJadwal($id) {
+        try {
+            Jadwal::findOrFail($id)->delete();
+            return response()->json(['success' => true]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
-}
-
-// --- DESTROY METHODS ---
-
-public function destroyBalita($id) {
-    try {
-        Balita::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function destroyPengukuran($id) {
-    try {
-        Pengukuran::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function destroyWilayah($id) {
-    try {
-        Wilayah::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function destroyPosyandu($id) {
-    try {
-        Posyandu::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function destroyArtikel($id) {
-    try {
-        Artikel::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function destroyJadwal($id) {
-    try {
-        Jadwal::findOrFail($id)->delete();
-        return response()->json(['success' => true]);
-    } catch (Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
 }

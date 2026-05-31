@@ -11,6 +11,7 @@ Route::post('/pengguna',          [SigiziController::class, 'storePengguna']);
 Route::post('/artikel',           [SigiziController::class, 'storeArtikel']);
 Route::post('/jadwal',            [SigiziController::class, 'storeJadwal']);
 Route::post('/notifikasi',        [SigiziController::class, 'storeNotifikasi']);
+Route::post('/saran',             [SigiziController::class, 'storeSaran']);
 
 // UPDATE
 Route::post('/balita/{id}',       [SigiziController::class, 'updateBalita']);

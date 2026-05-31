@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->string('kategori')->nullable();
             $table->string('penulis')->nullable();
             $table->date('tanggal')->nullable();
-            $table->longText('foto')->nullable();
+            $table->string('foto')->nullable();
             $table->string('videoUrl')->nullable();
             $table->text('isi')->nullable();
             $table->timestamps();
