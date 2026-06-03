@@ -64,25 +64,24 @@ class SigiziController extends Controller {
     // --- API STORE METHODS ---
     
     public function storeBalita(Request $request) {
-        try {
-            $data = $request->all(); 
-            unset($data['id']);
-
-            if (isset($data['tglLahir']))     { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
-            if (isset($data['jenisKelamin'])) { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
-            if (isset($data['nama_ibu']))      { $data['nama_ibu']       = $data['nama_ibu'];       unset($data['nama_ibu']); }
-            if (isset($data['nikIbu']))       { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
-            if (isset($data['noHP']))         { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
-            if (isset($data['namaAyah']))     { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
-            if (isset($data['pekerjaanIbu'])) { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
-            if (isset($data['pekerjaanAyah'])){ $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
-            
-            $res = Balita::create($data); 
-            return response()->json(['success' => true, 'data' => $res]);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Balita.', 'error' => $e->getMessage()], 500);
-        }
+    try {
+        $data = $request->all(); 
+        unset($data['id']);
+        if (isset($data['tglLahir']))     { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
+        if (isset($data['jenisKelamin'])) { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
+        // ✅ baris nama_ibu dihapus dari sini
+        if (isset($data['nikIbu']))       { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
+        if (isset($data['noHP']))         { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
+        if (isset($data['namaAyah']))     { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
+        if (isset($data['pekerjaanIbu'])) { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
+        if (isset($data['pekerjaanAyah'])){ $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
+        
+        $res = Balita::create($data); 
+        return response()->json(['success' => true, 'data' => $res]);
+    } catch (Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Gagal menyimpan data Balita.', 'error' => $e->getMessage()], 500);
     }
+}
 
     public function storePengukuran(Request $request) {
         try {
@@ -197,26 +196,25 @@ class SigiziController extends Controller {
     // --- UPDATE METHODS ---
 
     public function updateBalita(Request $request, $id) {
-        try {
-            $data = $request->all();
-            unset($data['id']);
-            
-            // Konversi camelCase dari frontend ke snake_case database
-            if (isset($data['tglLahir']))      { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
-            if (isset($data['jenisKelamin']))  { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
-            if (isset($data['nama_ibu']))       { $data['nama_ibu']       = $data['nama_ibu'];       unset($data['nama_ibu']); }
-            if (isset($data['nikIbu']))        { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
-            if (isset($data['noHP']))          { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
-            if (isset($data['namaAyah']))      { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
-            if (isset($data['pekerjaanIbu']))  { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
-            if (isset($data['pekerjaanAyah'])) { $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
-            
-            Balita::findOrFail($id)->update($data);
-            return response()->json(['success' => true]);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+    try {
+        $data = $request->all();
+        unset($data['id']);
+        
+        if (isset($data['tglLahir']))      { $data['tgl_lahir']      = $data['tglLahir'];      unset($data['tglLahir']); }
+        if (isset($data['jenisKelamin']))  { $data['jenis_kelamin']  = $data['jenisKelamin'];  unset($data['jenisKelamin']); }
+        // ✅ baris nama_ibu DIHAPUS
+        if (isset($data['nikIbu']))        { $data['nik_ibu']        = $data['nikIbu'];        unset($data['nikIbu']); }
+        if (isset($data['noHP']))          { $data['no_hp']          = $data['noHP'];          unset($data['noHP']); }
+        if (isset($data['namaAyah']))      { $data['nama_ayah']      = $data['namaAyah'];      unset($data['namaAyah']); }
+        if (isset($data['pekerjaanIbu']))  { $data['pekerjaan_ibu']  = $data['pekerjaanIbu'];  unset($data['pekerjaanIbu']); }
+        if (isset($data['pekerjaanAyah'])) { $data['pekerjaan_ayah'] = $data['pekerjaanAyah']; unset($data['pekerjaanAyah']); }
+        
+        Balita::findOrFail($id)->update($data);
+        return response()->json(['success' => true]);
+    } catch (Exception $e) {
+        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
     }
+}
 
     public function updatePengukuran(Request $request, $id) {
         try {

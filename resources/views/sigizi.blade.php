@@ -479,7 +479,10 @@ tr:hover td{background:#f9fdfb}
         <div class="login-stats" style="margin-top:28px">
           <div class="login-stat"><div class="login-stat-val" id="statBalita">—</div><div class="login-stat-label">Balita Terdaftar</div></div>
           <div class="login-stat"><div class="login-stat-val" id="statStunting">—</div><div class="login-stat-label">Risiko Stunting</div></div>
-          <div class="login-stat"><div class="login-stat-val">8×</div><div class="login-stat-label">Posyandu Aktif</div></div>
+         <div class="login-stat">
+  <div class="login-stat-val" id="statPosyandu">—</div>
+  <div class="login-stat-label">Posyandu Aktif</div>
+</div>
           <div class="login-stat"><div class="login-stat-val">3</div><div class="login-stat-label">Peran Pengguna</div></div>
         </div>
       </div>
@@ -637,13 +640,13 @@ const DB = {
   init() {}
 };
 DB.init();
+
  
 // ═══════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════
-let currentUser = null;
+ let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 let currentRole = 'admin';
- 
 // ── NEW ROLE SYSTEM ──
 const ROLE_CFG = {
   admin: {
@@ -696,6 +699,7 @@ function doLogin(){
   }
   document.getElementById('loginHint').textContent = '';
   currentUser = user;
+  localStorage.setItem('currentUser', JSON.stringify(user));
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   // Update live stats
@@ -710,6 +714,8 @@ function updateLoginStats(){
   ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
   const stunt = Object.values(latest).filter(u=>u.status==='Stunting'||u.status==='Stunting Berat').length;
   const el1=document.getElementById('statBalita'), el2=document.getElementById('statStunting');
+  const el3 = document.getElementById('statPosyandu');
+  if(el3) el3.textContent = (DB.get('posyandu')||[]).length;
   if(el1) el1.textContent = anak.length;
   if(el2) el2.textContent = anak.length ? Math.round(stunt/anak.length*100)+'%' : '0%';
 }
@@ -718,6 +724,8 @@ document.addEventListener('DOMContentLoaded', updateLoginStats);
  
 function doLogout(){
   currentUser = null;
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('currentSection');
   document.getElementById('app').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('loginUser').value='';
@@ -773,7 +781,9 @@ function initApp(){
   document.getElementById('userAvatar').textContent = currentUser.nama.charAt(0).toUpperCase();
   buildNav(r);
   const first = MENUS[r][0].sec;
-  showSection(first);
+  const savedSection = localStorage.getItem('currentSection');
+  const validSections = MENUS[r].map(m=>m.sec);
+  showSection(validSections.includes(savedSection) ? savedSection : first);
 }
  
 function buildNav(r){
@@ -793,6 +803,7 @@ function buildNav(r){
 }
  
 function showSection(sec){
+  localStorage.setItem('currentSection', sec);
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const navEl = document.getElementById('nav-'+sec);
   if(navEl) navEl.classList.add('active');
@@ -801,11 +812,11 @@ function showSection(sec){
   renderSection(sec);
 }
  
-function renderSection(sec){
+function renderSection(sec, ...args){
   const mc = document.getElementById('mainContent');
   mc.innerHTML='';
   const fn = SECTIONS[sec];
-  if(fn) mc.innerHTML = fn();
+  if(fn) mc.innerHTML = fn(...args);
   else mc.innerHTML = `<div class="empty"><i class="ti ti-hammer"></i><p>Halaman <b>${sec}</b> dalam pengembangan.</p></div>`;
   attachHandlers(sec);
 }
@@ -873,7 +884,7 @@ SECTIONS.dashboard = ()=>{
     </div>`).join('');
  
   const rows=terbaru.map(u=>{
-    const a=anak.find(x=>x.id===(u.idAnak || u.id_anak))||{};
+    const a=anak.find(x=>x.id==(u.idAnak || u.id_anak))||{};
     return `<tr>
       <td>${fmt(a.nama)}</td>
       <td>${hitungUsia(a.tglLahir || a.tgl_lahir)} bln</td>
@@ -918,7 +929,7 @@ SECTIONS.registrasi = ()=>{
   const rows=anak.map(a=>`<tr>
     <td>${fmt(a.nama)}</td>
     <td>${fmt(a.nik)}</td>
-    <td>${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</td>
+    <td>${(a.jenis_kelamin||a.jenisKelamin)==='L'?'Laki-laki':'Perempuan'}</td>
     <td>${fmtDate(a.tglLahir || a.tgl_lahir)} <span class="text-muted">(${hitungUsia(a.tglLahir || a.tgl_lahir)} bln)</span></td>
     <td>${fmt(a.nama_ibu)}</td>
     <td>${fmt(a.wilayah)}</td>
@@ -945,7 +956,7 @@ function filterAnak(){
   const tbody=document.querySelector('#tblAnak tbody');
   tbody.innerHTML=filtered.map(a=>`<tr>
     <td>${fmt(a.nama)}</td><td>${fmt(a.nik)}</td>
-    <td>${a.jenisKelamin==='L'?'Laki-laki':'Perempuan'}</td>
+    <td>${(a.jenis_kelamin||a.jenisKelamin)==='L'?'Laki-laki':'Perempuan'}</td>
     <td>${fmtDate(a.tglLahir || a.tgl_lahir)} <span class="text-muted">(${hitungUsia(a.tglLahir || a.tgl_lahir)} bln)</span></td>
     <td>${fmt(a.nama_ibu)}</td><td>${fmt(a.wilayah)}</td><td>${fmt(a.posyandu)}</td>
     <td><div class="table-action">
@@ -1046,25 +1057,26 @@ function detailAnak(id){
  
 function getFormAnak(){
   return {
-    nik:           document.getElementById('f_nik').value.trim(),
-    nama:          document.getElementById('f_nama').value.trim(),
-    tglLahir:      document.getElementById('f_tgl').value,
-    jenisKelamin:  document.getElementById('f_jk').value,
+    nik:            document.getElementById('f_nik').value.trim(),
+    nama:           document.getElementById('f_nama').value.trim(),
+    tgl_lahir:      document.getElementById('f_tgl').value,       // ✅ snake_case
+    jenis_kelamin:  document.getElementById('f_jk').value,        // ✅ snake_case
     nama_ibu:       document.getElementById('f_nama_ibu').value.trim(),
-    pekerjaanIbu:  document.getElementById('f_pekerjaanIbu').value.trim(),
-    nikIbu:        document.getElementById('f_nikIbu').value.trim(),
-    namaAyah:      document.getElementById('f_namaAyah').value.trim(),
-    pekerjaanAyah: document.getElementById('f_pekerjaanAyah').value.trim(),
-    noHP:          document.getElementById('f_hp').value.trim(),
-    alamat:        document.getElementById('f_alamat').value.trim(),
-    wilayah:       document.getElementById('f_wil').value,
-    posyandu:      document.getElementById('f_pos').value
+    pekerjaan_ibu:  document.getElementById('f_pekerjaanIbu').value.trim(), // ✅
+    nik_ibu:        document.getElementById('f_nikIbu').value.trim(),       // ✅
+    nama_ayah:      document.getElementById('f_namaAyah').value.trim(),     // ✅
+    pekerjaan_ayah: document.getElementById('f_pekerjaanAyah').value.trim(),// ✅
+    no_hp:          document.getElementById('f_hp').value.trim(),           // ✅
+    alamat:         document.getElementById('f_alamat').value.trim(),
+    wilayah:        document.getElementById('f_wil').value,
+    posyandu:       document.getElementById('f_pos').value
   };
 }
  
 async function simpanAnak(){
   const d = getFormAnak();
-  if(!d.nama||!d.tglLahir){showToast('Nama dan tanggal lahir wajib diisi','error');return;}
+  console.log('data yang dikirim:', d);
+  if(!d.nama||!d.tgl_lahir){showToast('Nama dan tanggal lahir wajib diisi','error');return;}
   
   try {
     // Simpan anak ke database, ambil ID dari MySQL
@@ -1081,26 +1093,41 @@ async function simpanAnak(){
     DB.set('anak', anak);
 
     // Auto-buat akun ortu
-    if(d.nikIbu){
-      const users = DB.get('users') || [];
-      const existingOrtu = users.find(u=>u.nik===d.nikIbu&&u.role==='ortu');
-      if(!existingOrtu){
-        // Simpan akun ortu ke database
-        const resOrtu = await fetch('/api/pengguna',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.nama_ibu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''})
-        });
-        const resultOrtu = await resOrtu.json();
-        users.push({id:resultOrtu.data.id,username:d.nikIbu,password:d.nikIbu,role:'ortu',nama:d.nama_ibu||'Orang Tua',nik:d.nikIbu,noHP:d.noHP||''});
-        DB.set('pengguna', users);
-        showToast(`Anak disimpan & akun orang tua dibuat (NIK: ${d.nikIbu})`,'success');
-      } else {
-        showToast('Data anak berhasil disimpan (akun ortu sudah ada)','success');
-      }
-    } else {
-      showToast('Data anak berhasil disimpan','success');
-    }
+    // Auto-buat akun ortu
+if(d.nik_ibu){
+  const users = DB.get('users') || [];
+  const existingOrtu = users.find(u=>u.nik===d.nik_ibu&&u.role==='ortu');
+  if(!existingOrtu){
+    const resOrtu = await fetch('/api/pengguna',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+  username: d.nik_ibu,
+  password: d.nik_ibu,
+  role: 'ortu',
+  nama: d.nama_ibu || 'Orang Tua',
+  nik: d.nik_ibu,
+  noHP: d.no_hp || ''  // ✅ pakai noHP sesuai kolom DB
+})
+    });
+    const resultOrtu = await resOrtu.json();
+    users.push({
+  id: resultOrtu.data.id,
+  username: d.nik_ibu,
+  password: d.nik_ibu,
+  role: 'ortu',
+  nama: d.nama_ibu || 'Orang Tua',
+  nik: d.nik_ibu,
+  noHP: d.no_hp || ''  // ✅ sama
+});
+    DB.set('users', users); // ✅ bukan 'pengguna'
+    showToast(`Anak disimpan & akun orang tua dibuat (NIK: ${d.nik_ibu})`,'success');
+  } else {
+    showToast('Data anak berhasil disimpan (akun ortu sudah ada)','success');
+  }
+} else {
+  showToast('Data anak berhasil disimpan','success');
+}
   } catch(e){
     showToast('Gagal menyimpan','error');
     return;
@@ -1115,11 +1142,23 @@ async function updateAnak(id){
   closeModal();showToast('Data berhasil diperbarui');renderSection('registrasi');
 }
 async function hapusAnak(id){
-  if(!confirm('Hapus data anak ini?'))return;
+  if(!confirm('Hapus data anak ini beserta akun ortu terkait?'))return;
+  const anak = DB.get('anak')||[];
+  const anakData = anak.find(a=>a.id==id);
   await fetch(`/api/balita/${id}/delete`,{method:'POST'});
-  DB.set('anak',(DB.get('anak')||[]).filter(a=>a.id!=id));
-  DB.set('pengukuran',(DB.get('pengukuran')||[]).filter(u=>(u.idAnak || u.id_anak)!=id));
-  showToast('Data dihapus');renderSection('registrasi');
+  DB.state.anak = anak.filter(a=>a.id!=id);
+  DB.state.pengukuran = (DB.get('pengukuran')||[]).filter(u=>(u.idAnak||u.id_anak)!=id);
+  // Hapus akun ortu yang NIK-nya cocok dengan nik_ibu anak
+  if(anakData && anakData.nik_ibu){
+    const users = DB.get('users')||[];
+    const ortu = users.find(u=>u.nik===anakData.nik_ibu || u.username===anakData.nik_ibu);
+    if(ortu){
+      await fetch(`/api/pengguna/${ortu.id}/delete`,{method:'POST'});
+      DB.state.users = users.filter(u=>u.id!=ortu.id);
+    }
+  }
+  showToast('Data anak dan akun ortu dihapus');
+  renderSection('registrasi');
 }
  
 // ──────────────────────────────────────
@@ -1129,7 +1168,7 @@ SECTIONS.pengukuran = ()=>{
   const ukur=DB.get('pengukuran')||[];
   const anak=DB.get('anak')||[];
   const rows=ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).map(u=>{
-    const a=anak.find(x=>x.id===(u.idAnak || u.id_anak))||{};
+    const a=anak.find(x=>x.id==(u.idAnak || u.id_anak))||{};
     return `<tr>
       <td>${fmtDate(u.tanggal)}</td>
       <td>${fmt(a.nama)}</td>
@@ -1254,10 +1293,31 @@ function editUkur(id){
   ${formUkur(u,anak)}
   <div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="updateUkur(${id})"><i class="ti ti-check"></i>Simpan</button></div>`);
 }
-function simpanUkur(){
-  const d=getFormUkur();if(!d.idAnak||!d.tanggal){showToast('Pilih anak dan tanggal','error');return;}
-  const ukur=DB.get('pengukuran');ukur.push({...d,id:uid()});DB.set('pengukuran',ukur);
-  closeModal();showToast('Pengukuran berhasil disimpan');renderSection('pengukuran');
+async function simpanUkur(){
+  const d = getFormUkur();
+  if(!d.idAnak||!d.tanggal){showToast('Pilih anak dan tanggal','error');return;}
+  
+  try {
+    const res = await fetch('/api/pengukuran', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(d)
+    });
+    const result = await res.json();
+    if(!result.success){showToast('Gagal menyimpan pengukuran','error');return;}
+
+    const ukur = DB.get('pengukuran') || [];
+    ukur.push({...d, id: result.data.id}); // ✅ ID dari MySQL
+    DB.set('pengukuran', ukur);
+
+  } catch(e){
+    showToast('Gagal menyimpan ke server','error');
+    return;
+  }
+
+  closeModal();
+  showToast('Pengukuran berhasil disimpan');
+  renderSection('pengukuran');
 }
 async function updateUkur(id){
   const d=getFormUkur();
@@ -1693,7 +1753,31 @@ function getFormJadwal(){
 }
 function tambahJadwal(){openModal(`<div class="modal-header"><div class="modal-title"><i class="ti ti-calendar-plus" style="color:var(--green)"></i> Tambah Jadwal</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>${formJadwal()}<div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="simpanJadwal()"><i class="ti ti-check"></i>Simpan sebagai Draft</button></div>`);}
 function editJadwal(id){const j=DB.get('jadwal').find(x=>x.id===id);openModal(`<div class="modal-header"><div class="modal-title">Edit Jadwal</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>${formJadwal(j)}<div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="updateJadwal(${id})"><i class="ti ti-check"></i>Simpan</button></div>`);}
-function simpanJadwal(){const d=getFormJadwal();if(!d.judul||!d.tanggal){showToast('Nama dan tanggal wajib diisi','error');return;}if(!d.posyandu){showToast('Pilih posyandu terlebih dahulu','error');return;}const jdwl=DB.get('jadwal');jdwl.push({...d,id:uid()});DB.set('jadwal',jdwl);closeModal();showToast('Jadwal disimpan sebagai draft');renderSection('jadwal');}
+async function simpanJadwal(){
+  const d=getFormJadwal();
+  if(!d.judul||!d.tanggal){showToast('Nama dan tanggal wajib diisi','error');return;}
+  if(!d.posyandu){showToast('Pilih posyandu terlebih dahulu','error');return;}
+  try {
+    const res = await fetch('/api/jadwal', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(d)
+    });
+    const json = await res.json();
+    if(json.success){
+      const jdwl=DB.get('jadwal');
+      jdwl.push({...d, id:json.data.id});
+      DB.state.jadwal = jdwl;
+      closeModal();
+      showToast('Jadwal disimpan sebagai draft');
+      renderSection('jadwal');
+    } else {
+      showToast('Gagal menyimpan jadwal','error');
+    }
+  } catch(e){
+    showToast('Gagal menyimpan ke server','error');
+  }
+}
 async function updateJadwal(id){
   const d=getFormJadwal();
   const old=DB.get('jadwal').find(j=>j.id==id);
@@ -1711,22 +1795,57 @@ async function hapusJadwal(id){
 // ──────────────────────────────────────
 // LAPORAN
 // ──────────────────────────────────────
-SECTIONS.laporan = ()=>{
-  const anak=DB.get('anak')||[];const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
-  const statuses=Object.values(latest).map(u=>u.status);
-  const total=anak.length,stunt=statuses.filter(s=>s==='Stunting'||s==='Stunting Berat').length;
+SECTIONS.laporan = (filterPos='semua', tglDari='', tglSampai='')=>{
+  const anak=DB.get('anak')||[];
+  const ukur=DB.get('pengukuran')||[];
+  const posyandus=[...new Set(anak.map(a=>a.posyandu).filter(Boolean))];
+
+  // Filter pengukuran berdasarkan tanggal
+  const ukurFiltered = ukur.filter(u=>{
+    if(tglDari && u.tanggal < tglDari) return false;
+    if(tglSampai && u.tanggal > tglSampai) return false;
+    return true;
+  });
+
+  const latest={};ukurFiltered.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
+
+  // Filter anak berdasarkan posyandu
+  const anakFiltered = filterPos==='semua' ? anak : anak.filter(a=>a.posyandu===filterPos);
+
+  const statuses=anakFiltered.map(a=>latest[a.id]?.status).filter(Boolean);
+  const total=anakFiltered.length,stunt=statuses.filter(s=>s==='Stunting'||s==='Stunting Berat').length;
   const pantau=statuses.filter(s=>s==='Perlu Pantau').length,normal=statuses.filter(s=>s==='Normal').length;
+
   const wilMaster=(DB.get('wilayah')||[]).map(w=>w.nama);
-  // sertakan wilayah dari data anak yg ada
-  anak.forEach(a=>{if(a.wilayah&&!wilMaster.includes(a.wilayah))wilMaster.push(a.wilayah);});
+  anakFiltered.forEach(a=>{if(a.wilayah&&!wilMaster.includes(a.wilayah))wilMaster.push(a.wilayah);});
   const wData=wilMaster.map(w=>{
-    const anakW=anak.filter(a=>a.wilayah===w);
+    const anakW=anakFiltered.filter(a=>a.wilayah===w);
     const stuntW=anakW.filter(a=>latest[a.id]&&(latest[a.id].status==='Stunting'||latest[a.id].status==='Stunting Berat')).length;
     return{w,total:anakW.length,stunt:stuntW,pct:anakW.length?Math.round(stuntW/anakW.length*100):0};
   });
   const maxS=Math.max(...wData.map(d=>d.stunt),1);
+
   return `
+  <div class="card mb-16" style="padding:16px">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="margin:0;min-width:180px">
+        <label style="font-size:12px;font-weight:600">Posyandu</label>
+        <select onchange="renderSection('laporan',this.value,document.getElementById('lp_dari').value||'',document.getElementById('lp_sampai').value||'')" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2)">
+          <option value="semua" ${filterPos==='semua'?'selected':''}>Semua Posyandu</option>
+          ${posyandus.map(p=>`<option value="${p}" ${filterPos===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label style="font-size:12px;font-weight:600">Dari Tanggal</label>
+        <input id="lp_dari" type="date" value="${tglDari}" onchange="renderSection('laporan',document.querySelector('select').value,this.value,document.getElementById('lp_sampai').value)" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2)">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label style="font-size:12px;font-weight:600">Sampai Tanggal</label>
+        <input id="lp_sampai" type="date" value="${tglSampai}" onchange="renderSection('laporan',document.querySelector('select').value,document.getElementById('lp_dari').value,this.value)" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2)">
+      </div>
+      <button class="btn" onclick="renderSection('laporan','semua','','')" style="height:36px"><i class="ti ti-refresh"></i> Reset</button>
+    </div>
+  </div>
   <div class="grid-4 mb-16">
     <div class="metric"><div class="metric-label">Total Balita</div><div class="metric-val">${total}</div></div>
     <div class="metric"><div class="metric-label" style="color:var(--red)">Stunting</div><div class="metric-val" style="color:var(--red)">${stunt} (${total?Math.round(stunt/total*100):0}%)</div></div>
@@ -1745,9 +1864,9 @@ SECTIONS.laporan = ()=>{
     <tbody>${wData.map(d=>`<tr><td>${d.w}</td><td>${d.total}</td><td><span class="badge ${d.stunt>0?'badge-red':'badge-green'}">${d.stunt}</span></td><td>${d.pct}%</td></tr>`).join('')}</tbody>
     </table></div>
   </div>
-  <div class="card mt-16"><div class="card-title"><i class="ti ti-list"></i>Rekap Lengkap — Semua Pengukuran</div>
-  <div class="table-wrap"><table><thead><tr><th>Nama Anak</th><th>Usia</th><th>Wilayah</th><th>BB</th><th>TB</th><th>Z TB/U</th><th>Status</th><th>Tgl Ukur</th></tr></thead>
-  <tbody>${anak.map(a=>{const u=latest[a.id];if(!u)return'';return`<tr><td>${a.nama}</td><td>${hitungUsia(a.tglLahir || a.tgl_lahir)} bln</td><td>${a.wilayah}</td><td>${u.bb}</td><td>${u.tb}</td><td>${u.zscore_tbu}</td><td>${statusBadge(u.status)}</td><td>${fmtDate(u.tanggal)}</td></tr>`;}).join('')}</tbody>
+  <div class="card mt-16"><div class="card-title"><i class="ti ti-list"></i>Rekap Lengkap</div>
+  <div class="table-wrap"><table><thead><tr><th>Nama Anak</th><th>Usia</th><th>Wilayah</th><th>Posyandu</th><th>BB</th><th>TB</th><th>Z TB/U</th><th>Status</th><th>Tgl Ukur</th></tr></thead>
+  <tbody>${anakFiltered.map(a=>{const u=latest[a.id];if(!u)return'';return`<tr><td>${a.nama}</td><td>${hitungUsia(a.tglLahir||a.tgl_lahir)} bln</td><td>${a.wilayah}</td><td>${a.posyandu||'-'}</td><td>${u.bb}</td><td>${u.tb}</td><td>${u.zscore_tbu}</td><td>${statusBadge(u.status)}</td><td>${fmtDate(u.tanggal)}</td></tr>`;}).join('')}</tbody>
   </table></div></div>`;
 };
  
@@ -1889,7 +2008,7 @@ async function simpanUser(){
     
     // Pakai ID dari MySQL bukan uid()
     users.push({...d, id: result.data.id});
-    DB.set('pengguna', users);
+    DB.set('users', users);
   } catch(e){
     showToast('Gagal menyimpan ke server','error');
     return;
@@ -1915,7 +2034,7 @@ async function hapusUser(id){
 
   // Update local state
   const users = DB.get('users') || [];
-  DB.set('pengguna', users.filter(u => u.id != id));
+  DB.state.users = users.filter(u => u.id != id);
   
   showToast('Pengguna dihapus');
   renderSection('pengguna'); // ← render dari local state yang sudah diupdate
@@ -1998,7 +2117,30 @@ function formPosyandu(data={}){
 function tambahPosyandu(){if(!(DB.get('wilayah')||[]).length){showToast('Tambahkan wilayah terlebih dahulu','error');return;}openModal(`<div class="modal-header"><div class="modal-title">Tambah Posyandu</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>${formPosyandu()}<div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="simpanPosyandu()"><i class="ti ti-check"></i>Simpan</button></div>`);}
 function editPosyandu(id){const p=DB.get('posyandu').find(x=>x.id===id);openModal(`<div class="modal-header"><div class="modal-title">Edit Posyandu</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>${formPosyandu(p)}<div class="modal-footer"><button class="btn" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="updatePosyandu(${id})"><i class="ti ti-check"></i>Simpan</button></div>`);}
 function getPosyanduForm(){return{nama:document.getElementById('ps_nama').value.trim(),wilayah:document.getElementById('ps_wil').value};}
-function simpanPosyandu(){const d=getPosyanduForm();if(!d.nama){showToast('Nama posyandu wajib diisi','error');return;}const pos=DB.get('posyandu');pos.push({...d,id:uid()});DB.set('posyandu',pos);closeModal();showToast('Posyandu ditambahkan');renderSection('pengaturan');}
+async function simpanPosyandu(){
+  const d=getPosyanduForm();
+  if(!d.nama){showToast('Nama posyandu wajib diisi','error');return;}
+  try {
+    const res = await fetch('/api/posyandu',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(d)
+    });
+    const json = await res.json();
+    if(json.success){
+      const pos=DB.get('posyandu');
+      pos.push({...d,id:json.data.id});
+      DB.state.posyandu=pos;
+      closeModal();
+      showToast('Posyandu ditambahkan');
+      renderSection('pengaturan');
+    } else {
+      showToast('Gagal menyimpan posyandu','error');
+    }
+  } catch(e){
+    showToast('Gagal menyimpan ke server','error');
+  }
+}
 async function updatePosyandu(id){
   const d=getPosyanduForm();if(!d.nama){showToast('Nama posyandu wajib diisi','error');return;}
   await fetch(`/api/posyandu/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
@@ -2105,7 +2247,7 @@ SECTIONS.profil = ()=>{
 
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Data Ibu</div>
       <div class="form-group mb-12"><label>Nama Ibu</label><input id="or_nama_ibu" value="${a.nama_ibu||a.nama_ibu||''}" placeholder="Nama ibu kandung"></div>
-      <div class="form-group mb-12"><label>NIK Ibu</label><input id="or_nikIbu" value="${a.nikIbu||a.nik_ibu||''}" placeholder="NIK ibu"></div>
+      <div class="form-group mb-12"><label>NIK Ibu <span style="color:var(--text3);font-size:11px">(tidak dapat diubah)</span></label><input id="or_nikIbu" value="${a.nikIbu||a.nik_ibu||''}" placeholder="NIK ibu" readonly style="background:var(--bg3);cursor:not-allowed;opacity:0.7"></div>
       <div class="form-group mb-12"><label>Pekerjaan Ibu</label><input id="or_pekerjaanIbu" value="${a.pekerjaanIbu||a.pekerjaan_ibu||''}" placeholder="Contoh: Ibu Rumah Tangga"></div>
       <div class="form-group mb-12"><label>No. HP</label><input id="or_hp" value="${a.noHP||a.no_hp||''}" placeholder="08xxx"></div>
 
@@ -2161,8 +2303,17 @@ SECTIONS.profil = ()=>{
         </label>
         ${u.fotoProfil?`<button class="btn btn-sm btn-danger" onclick="hapusFotoProfil()"><i class="ti ti-trash"></i> Hapus Foto</button>`:''}
       </div>
-      <div class="form-group mb-12"><label>Nama Lengkap</label><input id="pr_nama" value="${u.nama}" placeholder="Nama lengkap"></div>
-      ${u.role==='admin'?`<div class="form-group mb-12"><label>Username</label><input id="pr_user" value="${u.username||''}" placeholder="Username"></div>`:''}
+     <div class="form-group mb-12"><label>Nama Lengkap</label><input id="pr_nama" value="${u.nama||''}" placeholder="Nama lengkap"></div>
+${u.role==='admin'?`
+  <div class="form-group mb-12"><label>Username</label><input id="pr_user" value="${u.username||''}" placeholder="Username"></div>
+  <div class="form-group mb-12">
+    <label>Password Baru <span style="color:var(--text3);font-size:11px">(kosongkan jika tidak ingin ubah)</span></label>
+    <input type="password" id="pr_pass" placeholder="Password baru">
+  </div>
+  <div class="form-group mb-16">
+    <label>Konfirmasi Password</label>
+    <input type="password" id="pr_pass_confirm" placeholder="Ulangi password baru">
+  </div>`:''}
       <div class="form-group mb-16"><label>${u.role==='bidan'?'NIP':'NIK'}</label><input id="pr_nip" value="${u.nip||u.nik||''}" placeholder="${u.role==='bidan'?'NIP':'NIK'}"></div>
       <button class="btn btn-primary w-full" onclick="simpanProfil()" style="justify-content:center"><i class="ti ti-check"></i>Simpan Perubahan</button>
     </div>
@@ -2235,7 +2386,7 @@ SECTIONS.saran_admin = ()=>{
   if(filterPos!=='semua') filtered = filtered.filter(s=>s.posyandu===filterPos);
   if(filterBintang>0) filtered = filtered.filter(s=>s.rating==filterBintang);
 
-  const avgRating = filtered.length?(filtered.reduce((a,b)=>a+(b.rating||0),0)/filtered.length).toFixed(1):0;
+  const avgRating = filtered.length?(filtered.reduce((a,b)=>a+Number(b.rating||0),0)/filtered.length).toFixed(1):0;
 
   const rows = filtered.map(s=>`
     <tr>
@@ -2262,7 +2413,7 @@ SECTIONS.saran_admin = ()=>{
     <div class="metric" style="border-top:3px solid #f59e0b">
       <div class="metric-label"><i class="ti ti-star" style="color:#f59e0b"></i> Rata-rata Rating</div>
       <div class="metric-val" style="color:#f59e0b">${avgRating}</div>
-      <div class="metric-sub">${'★'.repeat(Math.round(avgRating))}${'☆'.repeat(5-Math.round(avgRating))}</div>
+      <div class="metric-sub">${'★'.repeat(Math.min(5,Math.round(avgRating)))}${'☆'.repeat(Math.max(0,5-Math.round(avgRating)))}</div>
     </div>
   </div>
 
@@ -2468,10 +2619,22 @@ async function simpanProfilOrtu(idAnak){
   return;
 }
 
+  // Update nama di tabel pengguna
+  const namaIbu = d.nama_ibu;
+  if(namaIbu){
+    await fetch(`/api/pengguna/${currentUser.id}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({nama: namaIbu})
+    });
+    currentUser.nama = namaIbu;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    document.getElementById('userName').textContent = namaIbu;
+    document.getElementById('userAvatar').textContent = namaIbu.charAt(0).toUpperCase();
+  }
   DB.set('anak', (DB.get('anak')||[]).map(a=>
     a.id==idAnak ? {...a, ...d} : a
   ));
-
   showToast('Profil berhasil diperbarui','success');
   renderSection('profil');
 }
@@ -2487,20 +2650,49 @@ function hapusFotoProfil(){
   renderSection('profil');
 }
  
-function simpanProfil(){
-  const nama=document.getElementById('pr_nama').value.trim();
-  const usernameEl=document.getElementById('pr_user');
-  const username=usernameEl?usernameEl.value.trim():(currentUser.username||'');
-  const nip=document.getElementById('pr_nip').value.trim();
+async function simpanProfil(){
+  const nama = document.getElementById('pr_nama').value.trim();
+  const usernameEl = document.getElementById('pr_user');
+  const username = usernameEl ? usernameEl.value.trim() : (currentUser.username||'');
+  const nip = document.getElementById('pr_nip')?.value.trim() || '';
+  const passEl = document.getElementById('pr_pass');
+  const passConfirmEl = document.getElementById('pr_pass_confirm');
+  const newPass = passEl ? passEl.value.trim() : '';
+  const confirmPass = passConfirmEl ? passConfirmEl.value.trim() : '';
+
   if(!nama){showToast('Nama wajib diisi','error');return;}
-  const users=DB.get('users').map(u=>{
-    if(u.id!==currentUser.id)return u;
-    return {...u,nama,username,nip};
+  if(newPass){
+    if(newPass.length < 6){showToast('Password minimal 6 karakter','error');return;}
+    if(newPass !== confirmPass){showToast('Konfirmasi password tidak cocok','error');return;}
+  }
+
+  const payload = {nama, username, nip};
+  if(newPass) payload.password = newPass;
+
+  try {
+    await fetch(`/api/pengguna/${currentUser.id}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } catch(e){
+    showToast('Gagal menyimpan ke server','error');
+    return;
+  }
+
+  const users = DB.get('users').map(u => {
+    if(u.id !== currentUser.id) return u;
+    const updated = {...u, nama, username, nip};
+    if(newPass) updated.password = newPass;
+    return updated;
   });
-  DB.set('users',users);
-  currentUser={...currentUser,nama,username,nip};
-  document.getElementById('userName').textContent=nama;
-  document.getElementById('userAvatar').textContent=nama.charAt(0).toUpperCase();
+
+  DB.set('users', users);
+  currentUser = {...currentUser, nama, username, nip};
+  if(newPass) currentUser.password = newPass;
+
+  document.getElementById('userName').textContent = nama;
+  document.getElementById('userAvatar').textContent = nama.charAt(0).toUpperCase();
   showToast('Profil berhasil diperbarui');
   renderSection('profil');
 }
@@ -2553,7 +2745,7 @@ const a = anak.find(x => (x.nikIbu || x.nik_ibu) === nikOrtu);
 // ──────────────────────────────────────
 function grafikAnak(id){
   const a=DB.get('anak').find(x=>x.id===id);
-  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)===id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
+  const ukur=DB.get('pengukuran').filter(u => (u.idAnak || u.id_anak) == id).sort((x,y)=>x.tanggal.localeCompare(y.tanggal));
   openModal(`<div class="modal-header"><div class="modal-title"><i class="ti ti-chart-line" style="color:var(--green)"></i> Grafik — ${a.nama}</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>
   <div class="mb-12"><div class="card-title" style="margin-bottom:8px"><i class="ti ti-trending-up"></i>Berat Badan (kg)</div>${buatGrafikSVG(ukur,'bb','Berat Badan','#16a37f','kg')}</div>
   <div class="mb-12"><div class="card-title" style="margin-bottom:8px"><i class="ti ti-trending-up"></i>Tinggi Badan (cm)</div>${buatGrafikSVG(ukur,'tb','Tinggi Badan','#2563eb','cm')}</div>
@@ -2565,22 +2757,64 @@ function grafikAnak(id){
 // UNDUH LAPORAN CSV
 // ──────────────────────────────────────
 function unduhLaporan(){
-  const anak=DB.get('anak')||[];
-  const ukur=DB.get('pengukuran')||[];
-  const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
-  const header='Nama Anak,JK,Usia (bln),Wilayah,Posyandu,BB (kg),TB (cm),Z TB/U,Status,Tgl Ukur';
-  const rows=anak.map(a=>{const u=latest[a.id];return[a.nama,a.jenisKelamin,hitungUsia(a.tglLahir || a.tgl_lahir),a.wilayah,a.posyandu,u?u.bb:'',u?u.tb:'',u?u.zscore_tbu:'',u?u.status:'',u?u.tanggal:''].join(',');});
-  const csv=[header,...rows].join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`Laporan_SiGizi_${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  showToast('File CSV berhasil diunduh');
+  const anak = DB.get('anak') || [];
+  const ukur = DB.get('pengukuran') || [];
+  
+  const latest = {};
+  ukur.sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+      .forEach(u => {
+        if (!latest[(u.idAnak || u.id_anak)]) 
+          latest[(u.idAnak || u.id_anak)] = u;
+      });
+
+  const header = ['Nama Anak','JK','Usia (bln)','Wilayah','Posyandu','BB (kg)','TB (cm)','Z TB/U','Status','Tgl Ukur'];
+  
+  const rows = anak.map(a => {
+    const u = latest[a.id];
+    return [
+      a.nama,
+      a.jenis_kelamin || a.jenisKelamin,
+      hitungUsia(a.tglLahir || a.tgl_lahir),
+      a.wilayah,
+      a.posyandu,
+      u ? u.bb : '',
+      u ? u.tb : '',
+      u ? u.zscore_tbu : '',
+      u ? u.status : '',
+      u ? u.tanggal : ''
+    ];
+  });
+
+  const xmlDecl = '<' + '?xml version="1.0" encoding="UTF-8"?' + '>';
+  const msoPI   = '<' + '?mso-application progid="Excel.Sheet"?' + '>';
+
+  let xml = xmlDecl + msoPI;
+  xml += `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">`;
+  xml += `<Worksheet ss:Name="Laporan"><Table>`;
+  xml += `<Row>${header.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>`;
+  
+  rows.forEach(r => {
+    xml += `<Row>${r.map(c => `<Cell><Data ss:Type="String">${c ?? ''}</Data></Cell>`).join('')}</Row>`;
+  });
+  
+  xml += `</Table></Worksheet></Workbook>`;
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Laporan_SiGizi_${new Date().toISOString().slice(0, 10)}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showToast('File XLS berhasil diunduh');
 }
- 
 // ──────────────────────────────────────
 // PRINT / EXPORT LAPORAN
 // ──────────────────────────────────────
-function printLaporan(){
+function printLaporan(autoPrint=false){
   const anak=DB.get('anak')||[];
   const ukur=DB.get('pengukuran')||[];
   const latest={};ukur.sort((a,b)=>b.tanggal.localeCompare(a.tanggal)).forEach(u=>{if(!latest[(u.idAnak || u.id_anak)])latest[(u.idAnak || u.id_anak)]=u;});
@@ -2599,19 +2833,21 @@ function printLaporan(){
     <div class="meta-item"><div>Stunting</div><div class="meta-val" style="color:#dc2626">${stunt}</div></div>
     <div class="meta-item"><div>Prevalensi</div><div class="meta-val">${anak.length?Math.round(stunt/anak.length*100):0}%</div></div>
   </div>
-  <button onclick="window.print()" style="padding:8px 16px;background:#16a37f;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-bottom:10px">🖨️ Cetak / Simpan PDF</button>
+  <button onclick="window.print()" style="padding:8px 16px;background:#16a37f;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-bottom:10px">🖨️ Cetak</button>
   <table><thead><tr><th>Nama Anak</th><th>JK</th><th>Usia</th><th>Wilayah</th><th>BB</th><th>TB</th><th>Z TB/U</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
   </body></html>`);
   win.document.close();
+  if(autoPrint) setTimeout(()=>win.print(), 500);
 }
  
 // Override SECTIONS.laporan to add print button
 const _oldLaporan = SECTIONS.laporan;
-SECTIONS.laporan = ()=>{
-  const base = _oldLaporan();
+SECTIONS.laporan = (...args)=>{
+  const base = _oldLaporan(...args);
   return `<div class="search-row" style="justify-content:flex-end;margin-bottom:16px;gap:8px">
-    <button class="btn" onclick="unduhLaporan()"><i class="ti ti-download"></i> Unduh CSV</button>
-    <button class="btn btn-primary" onclick="printLaporan()"><i class="ti ti-printer"></i> Cetak / PDF</button>
+    <button class="btn" onclick="unduhLaporan()"><i class="ti ti-file-spreadsheet"></i> Unduh XLS</button>
+    <button class="btn" onclick="unduhLaporanPDF()"><i class="ti ti-file-download"></i> Download PDF</button>
+    <button class="btn btn-primary" onclick="printLaporan()"><i class="ti ti-printer"></i> Cetak</button>
   </div>`+base;
 };
  
@@ -2619,7 +2855,7 @@ SECTIONS.laporan = ()=>{
 const _oldDetailAnak = detailAnak;
 function detailAnak(id){
   const a=DB.get('anak').find(x=>x.id===id);
-  const ukur=DB.get('pengukuran').filter(u=>(u.idAnak || u.id_anak)===id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+  const ukur=DB.get('pengukuran').filter(u => (u.idAnak || u.id_anak) == id).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
   const last=ukur[0];
   openModal(`<div class="modal-header"><div class="modal-title">Profil — ${a.nama}</div><div class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></div></div>
   <div class="info-row"><div class="info-label">NIK</div><div class="info-val">${fmt(a.nik)}</div></div>
@@ -2655,6 +2891,11 @@ document.addEventListener('click', function(e) {
     toggleSidebar();
   }
 });
+if(currentUser){
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  initApp();
+}
 </script>
 </body>
 </html>

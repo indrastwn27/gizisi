@@ -9,11 +9,11 @@ return new class extends Migration {
             $table->id();
             $table->string('nik')->nullable();
             $table->string('nama')->nullable();
-           $table->date('tgl_lahir')->nullable(); // Ubah dari tglLahir
-    $table->string('jenis_kelamin')->nullable(); // Ubah dari jenisKelamin
-    $table->string('nama_ibu')->nullable(); // Ubah dari nama_ibu
-    $table->string('nik_ibu')->nullable(); // Ubah dari nikIbu
-    $table->string('no_hp')->nullable(); // Ubah dari noHP (karena di error balitas terdeteksi mencari no_hp)
+           $table->date('tgl_lahir')->nullable(); 
+            $table->string('jenis_kelamin')->nullable(); 
+            $table->string('nama_ibu')->nullable(); 
+            $table->string('nik_ibu')->nullable(); 
+            $table->string('no_hp')->nullable(); 
             $table->text('alamat')->nullable();
             $table->string('wilayah')->nullable();
             $table->string('posyandu')->nullable();

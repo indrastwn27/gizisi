@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('nama')->nullable();
             $table->string('nip')->nullable();
             $table->string('nik')->nullable();
-            $table->string('noHP')->nullable(); // <-- TAMBAHKAN BARIS INI
+            $table->string('noHP')->nullable(); 
             $table->timestamps();
         });
     }

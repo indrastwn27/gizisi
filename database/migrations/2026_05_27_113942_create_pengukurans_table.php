@@ -7,7 +7,7 @@ return new class extends Migration {
     public function up() {
         Schema::create('pengukurans', function (Blueprint $table) {
             $table->id();
-            $table->integer('id_anak'); // Ubah dari idAnak menjadi id_anak
+            $table->integer('id_anak'); // 
             $table->date('tanggal')->nullable();
             $table->float('bb')->nullable();
             $table->float('tb')->nullable();

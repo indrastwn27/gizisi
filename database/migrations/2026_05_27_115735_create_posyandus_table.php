@@ -8,7 +8,7 @@ return new class extends Migration {
         Schema::create('posyandus', function (Blueprint $table) {
             $table->id();
             $table->string('nama')->nullable();
-            $table->string('wilayah')->nullable(); // Untuk menghubungkan ke nama wilayahnya
+            $table->string('wilayah')->nullable(); 
             $table->timestamps();
         });
     }
